@@ -1,28 +1,58 @@
 // src/index.js
+require('dotenv').config();
 const express = require('express');
-const bodyParser = require('body-parser');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 
 // Import routes
 const rfqRoutes = require('./api/routes/rfqs');
 const bidRoutes = require('./api/routes/bids');
-// ... import other routes as they are created
 
 const app = express();
 
-// --- Middlewares ---
-// In a real app, you'd also have CORS, logging, etc.
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// --- Security Middlewares ---
+app.use(helmet());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000,
+  max: process.env.RATE_LIMIT_MAX_REQUESTS || 100
+});
+app.use(limiter);
+
+// --- Body Parsing ---
+app.use(cookieParser());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// --- Authentication Middleware ---
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+  
+  // In production, verify JWT token here
+  // For now, mock user data
+  req.user = { id: 1, role: 'user' };
+  next();
+};
 
 // --- Routes ---
-// Here we are mounting the route files.
-// The API endpoints will be prefixed with /api
-app.use('/api/rfq', rfqRoutes);
-app.use('/api/bids', bidRoutes);
+app.use('/api/rfq', authenticateToken, rfqRoutes);
+app.use('/api/bids', authenticateToken, bidRoutes);
 
-// A simple root endpoint to check if the server is running
 app.get('/', (req, res) => {
     res.send('RFQ Bidding Platform API is running!');
+});
+
+// --- Error Handling ---
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
 });
 
 // --- Server ---

@@ -1,11 +1,28 @@
 // src/controllers/RFQController.js
-
 const RFQService = require('../services/RFQService');
 
-// A simple error handler for demonstration
 const handleErrors = (err, res) => {
-    console.error(err);
+    if (err.message.includes('Invalid ID')) {
+        return res.status(400).json({ success: false, message: err.message });
+    }
+    if (err.message.includes('not found')) {
+        return res.status(404).json({ success: false, message: err.message });
+    }
+    if (err.message.includes('Unauthorized')) {
+        return res.status(403).json({ success: false, message: err.message });
+    }
+    if (err.message.includes('required') || err.message.includes('must be')) {
+        return res.status(400).json({ success: false, message: err.message });
+    }
+    console.error('Unexpected error:', err);
     res.status(500).json({ success: false, message: "An internal server error occurred." });
+};
+
+const sanitizeInput = (input) => {
+    if (typeof input === 'string') {
+        return input.replace(/[<>"'&]/g, '');
+    }
+    return input;
 };
 
 class RFQController {
@@ -31,6 +48,9 @@ class RFQController {
     async getRFQById(req, res) {
         try {
             const { id } = req.params;
+            if (!id || isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid RFQ ID" });
+            }
             const rfq = await RFQService.findById(id);
             if (!rfq) {
                 return res.status(404).json({ success: false, message: "RFQ not found" });
@@ -49,10 +69,12 @@ class RFQController {
      */
     async createRFQ(req, res) {
         try {
-            const rfqData = req.body;
-            // In a real app, the user's ID would be available from the auth middleware
-            // For now, we'll assume it's passed in the body or hardcoded for testing
-            // e.g., rfqData.buyer_id = req.user.id;
+            const rfqData = {
+                ...req.body,
+                buyer_id: req.user.id,
+                title: sanitizeInput(req.body.title),
+                description: sanitizeInput(req.body.description)
+            };
             
             const newRFQ = await RFQService.create(rfqData);
             res.status(201).json({ success: true, message: "RFQ created successfully", data: newRFQ });
@@ -70,32 +92,24 @@ class RFQController {
     async updateRFQ(req, res) {
         try {
             const { id } = req.params;
-            const updateData = req.body;
-            // const userId = req.user.id; // from auth middleware
-            const updatedRFQ = await RFQService.update(id, updateData /*, userId */);
-            if (!updatedRFQ) {
-                return res.status(404).json({ success: false, message: "RFQ not found or user not authorized" });
-            }
+            const updateData = {
+                ...req.body,
+                title: sanitizeInput(req.body.title),
+                description: sanitizeInput(req.body.description)
+            };
+            const userId = req.user.id;
+            const updatedRFQ = await RFQService.update(id, updateData, userId);
             res.status(200).json({ success: true, message: "RFQ updated successfully", data: updatedRFQ });
         } catch (error) {
             handleErrors(error, res);
         }
     }
 
-    /**
-     * @description Close an RFQ
-     * @route POST /api/rfq/:id/close
-     * @access Private (Buyer owner only)
-     * @middleware auth, roleGuard('buyer'), isRFQOwner
-     */
     async closeRFQ(req, res) {
         try {
             const { id } = req.params;
-            // const userId = req.user.id; // from auth middleware
-            const closedRFQ = await RFQService.close(id /*, userId */);
-            if (!closedRFQ) {
-                return res.status(404).json({ success: false, message: "RFQ not found or user not authorized" });
-            }
+            const userId = req.user.id;
+            const closedRFQ = await RFQService.close(id, userId);
             res.status(200).json({ success: true, message: "RFQ closed successfully", data: closedRFQ });
         } catch (error) {
             handleErrors(error, res);
@@ -110,6 +124,9 @@ class RFQController {
     async getRelatedRFQs(req, res) {
         try {
             const { id } = req.params;
+            if (!id || isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid RFQ ID" });
+            }
             const relatedRFQs = await RFQService.findRelated(id);
             res.status(200).json({ success: true, message: "Related RFQs fetched", data: relatedRFQs });
         } catch (error) {

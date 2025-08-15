@@ -1,14 +1,12 @@
 // src/config/db.js
 const { Pool } = require('pg');
 
-// IMPORTANT: Replace these with your actual database credentials
-// In a real application, these should be stored securely in environment variables
 const pool = new Pool({
-    user: 'postgres', // your database user
-    host: 'localhost',
-    database: 'getlancer_quote', // your database name
-    password: 'password', // your database password
-    port: 5432,
+    user: process.env.DB_USER || 'postgres',
+    host: process.env.DB_HOST || 'localhost',
+    database: process.env.DB_NAME || 'getlancer_quote',
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT || 5432,
 });
 
 module.exports = {
