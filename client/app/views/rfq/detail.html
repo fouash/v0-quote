@@ -1,0 +1,317 @@
+<div class="rfq-detail" ng-controller="RfqCtrl">
+    <div class="container-fluid">
+        <!-- Loading State -->
+        <div ng-if="loading" class="text-center">
+            <i class="fa fa-spinner fa-spin fa-2x"></i>
+            <p>Loading RFQ details...</p>
+        </div>
+        
+        <!-- RFQ Content -->
+        <div ng-if="!loading && currentRfq">
+            <div class="row">
+                <!-- Main Content -->
+                <div class="col-md-8">
+                    <!-- RFQ Header -->
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+                            <div class="rfq-header">
+                                <h2>{{currentRfq.title}}</h2>
+                                <div class="rfq-meta">
+                                    <span class="label label-{{currentRfq.status === 'open' ? 'success' : 'default'}}">
+                                        {{currentRfq.status | uppercase}}
+                                    </span>
+                                    <span class="label label-info">{{currentRfq.category.name}}</span>
+                                    <span ng-if="currentRfq.subcategory" class="label label-info">
+                                        {{currentRfq.subcategory.name}}
+                                    </span>
+                                </div>
+                                
+                                <div class="rfq-details mt-3">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>Budget:</strong> 
+                                                {{formatCurrency(currentRfq.budget_min, currentRfq.currency)}} - 
+                                                {{formatCurrency(currentRfq.budget_max, currentRfq.currency)}}
+                                            </p>
+                                            <p><strong>Location:</strong> 
+                                                {{currentRfq.location.city}}, {{currentRfq.location.country}}
+                                            </p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Posted by:</strong> 
+                                                <a href="#/profile/{{currentRfq.buyer.id}}">
+                                                    {{currentRfq.buyer.username}}
+                                                </a>
+                                            </p>
+                                            <p><strong>Posted:</strong> {{timeAgo(currentRfq.created_at)}}</p>
+                                            <p ng-if="currentRfq.closing_at"><strong>Closes:</strong> 
+                                                {{timeAgo(currentRfq.closing_at)}}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Tags -->
+                                <div ng-if="currentRfq.tags.length > 0" class="rfq-tags mt-2">
+                                    <span ng-repeat="tag in currentRfq.tags" class="label label-default">
+                                        {{tag}}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- RFQ Description -->
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4>Project Description</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div ng-bind-html="currentRfq.description | nl2br"></div>
+                            
+                            <!-- Attachments -->
+                            <div ng-if="currentRfq.attachments.length > 0" class="mt-3">
+                                <h5>Attachments</h5>
+                                <ul class="list-unstyled">
+                                    <li ng-repeat="attachment in currentRfq.attachments">
+                                        <a href="{{attachment.url}}" target="_blank">
+                                            <i class="fa fa-file"></i> {{attachment.name}}
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bid Form (Vendors Only) -->
+                    <div ng-if="canBid()" class="panel panel-success">
+                        <div class="panel-heading">
+                            <h4>Place Your Bid</h4>
+                        </div>
+                        <div class="panel-body">
+                            <form ng-submit="placeBid()">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Bid Amount ({{currentRfq.currency}})</label>
+                                            <input type="number" ng-model="newBid.amount" 
+                                                   class="form-control" required 
+                                                   min="{{currentRfq.budget_min}}" 
+                                                   max="{{currentRfq.budget_max}}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Delivery Time (Days)</label>
+                                            <input type="number" ng-model="newBid.delivery_days" 
+                                                   class="form-control" required min="1">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Proposal Message</label>
+                                    <textarea ng-model="newBid.message" class="form-control" 
+                                              rows="4" required 
+                                              placeholder="Describe your approach and why you're the best fit..."></textarea>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-success" ng-disabled="loading">
+                                    <i class="fa fa-paper-plane"></i> Submit Bid
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Existing Bids -->
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4>Bids ({{bids.length}})</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div ng-if="bids.length === 0" class="text-center text-muted">
+                                <i class="fa fa-inbox fa-2x"></i>
+                                <p>No bids yet. Be the first to bid!</p>
+                            </div>
+                            
+                            <div ng-repeat="bid in bids" class="bid-item panel panel-default">
+                                <div class="panel-body">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="bid-vendor">
+                                                <img ng-src="{{bid.vendor.avatar || '/images/default-avatar.png'}}" 
+                                                     class="avatar-sm" alt="{{bid.vendor.username}}">
+                                                <strong>
+                                                    <a href="#/profile/{{bid.vendor.id}}">
+                                                        {{bid.vendor.username}}
+                                                    </a>
+                                                </strong>
+                                                <span class="vendor-rating">
+                                                    <i class="fa fa-star text-warning"></i>
+                                                    {{bid.vendor.rating || 'N/A'}}
+                                                    ({{bid.vendor.review_count || 0}} reviews)
+                                                </span>
+                                            </div>
+                                            
+                                            <p class="bid-message mt-2">{{bid.message}}</p>
+                                            
+                                            <small class="text-muted">
+                                                <i class="fa fa-clock-o"></i> {{timeAgo(bid.created_at)}}
+                                            </small>
+                                        </div>
+                                        
+                                        <div class="col-md-4 text-right">
+                                            <div class="bid-amount">
+                                                <h4 class="text-success">
+                                                    {{formatCurrency(bid.amount, currentRfq.currency)}}
+                                                </h4>
+                                                <p class="text-muted">
+                                                    <i class="fa fa-calendar"></i> 
+                                                    {{bid.delivery_days}} days delivery
+                                                </p>
+                                            </div>
+                                            
+                                            <div ng-if="canAwardBid(bid)" class="mt-2">
+                                                <button ng-click="awardBid(bid)" 
+                                                        class="btn btn-primary btn-sm">
+                                                    Award Project
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sidebar -->
+                <div class="col-md-4">
+                    <!-- RFQ Stats -->
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4>RFQ Statistics</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="stat-item">
+                                <strong>{{bids.length}}</strong>
+                                <span class="text-muted">Bids Received</span>
+                            </div>
+                            <div class="stat-item">
+                                <strong>{{currentRfq.views || 0}}</strong>
+                                <span class="text-muted">Views</span>
+                            </div>
+                            <div class="stat-item">
+                                <strong>{{timeAgo(currentRfq.created_at)}}</strong>
+                                <span class="text-muted">Posted</span>
+                            </div>
+                            <div ng-if="currentRfq.closing_at" class="stat-item">
+                                <strong>{{timeAgo(currentRfq.closing_at)}}</strong>
+                                <span class="text-muted">Closes</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Buyer Info -->
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4>About the Buyer</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="buyer-profile text-center">
+                                <img ng-src="{{currentRfq.buyer.avatar || '/images/default-avatar.png'}}" 
+                                     class="avatar-lg" alt="{{currentRfq.buyer.username}}">
+                                <h5>
+                                    <a href="#/profile/{{currentRfq.buyer.id}}">
+                                        {{currentRfq.buyer.username}}
+                                    </a>
+                                </h5>
+                                <div class="buyer-rating">
+                                    <i class="fa fa-star text-warning"></i>
+                                    {{currentRfq.buyer.rating || 'N/A'}}
+                                    ({{currentRfq.buyer.review_count || 0}} reviews)
+                                </div>
+                                
+                                <div class="buyer-stats mt-3">
+                                    <div class="row">
+                                        <div class="col-xs-6">
+                                            <strong>{{currentRfq.buyer.projects_posted || 0}}</strong>
+                                            <br><small>Projects Posted</small>
+                                        </div>
+                                        <div class="col-xs-6">
+                                            <strong>{{currentRfq.buyer.total_spent || 0 | currency}}</strong>
+                                            <br><small>Total Spent</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <button ng-if="user.id !== currentRfq.buyer.id" 
+                                            ng-click="contactBuyer()" 
+                                            class="btn btn-primary btn-sm">
+                                        <i class="fa fa-envelope"></i> Contact
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Related RFQs -->
+                    <div ng-if="relatedRfqs.length > 0" class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4>Related RFQs</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div ng-repeat="rfq in relatedRfqs | limitTo:5" class="related-rfq">
+                                <h6>
+                                    <a href="#/rfq/{{rfq.id}}/{{rfq.slug_title}}">
+                                        {{rfq.title | limitTo:50}}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">
+                                    {{formatCurrency(rfq.budget_min, rfq.currency)}} - 
+                                    {{formatCurrency(rfq.budget_max, rfq.currency)}}
+                                </small>
+                                <hr ng-if="!$last">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Share RFQ -->
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4>Share this RFQ</h4>
+                        </div>
+                        <div class="panel-body text-center">
+                            <div class="social-share">
+                                <a href="#" ng-click="shareOnFacebook()" class="btn btn-primary btn-sm">
+                                    <i class="fa fa-facebook"></i> Facebook
+                                </a>
+                                <a href="#" ng-click="shareOnTwitter()" class="btn btn-info btn-sm">
+                                    <i class="fa fa-twitter"></i> Twitter
+                                </a>
+                                <a href="#" ng-click="shareOnLinkedIn()" class="btn btn-primary btn-sm">
+                                    <i class="fa fa-linkedin"></i> LinkedIn
+                                </a>
+                            </div>
+                            
+                            <div class="mt-2">
+                                <input type="text" class="form-control" 
+                                       value="{{getCurrentUrl()}}" readonly 
+                                       ng-click="selectText($event)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Error State -->
+        <div ng-if="!loading && !currentRfq" class="text-center">
+            <i class="fa fa-exclamation-triangle fa-3x text-warning"></i>
+            <h4>RFQ Not Found</h4>
+            <p class="text-muted">The requested RFQ could not be found or may have been removed.</p>
+            <a href="#/rfq" class="btn btn-primary">Browse All RFQs</a>
+        </div>
+    </div>
+</div>

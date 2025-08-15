@@ -240,6 +240,7 @@ class User extends AppModel
         'canListEmployerProjectBidInvoice',
         'canListMyEmployerMilestone',
         'canDeleteProjectBidInvoice',
+        'canCreateHireRequest',
         'canUpdateHireRequest',
         'canDeleteHireRequest',
         'canListHireRequest',
@@ -741,5 +742,111 @@ class User extends AppModel
         } else {
             $query->where('role_id', '!=', \Constants\ConstUserTypes::Admin);
         }
+    }
+    
+    // Profile relationships
+    public function profile()
+    {
+        return $this->hasOne('Models\UserProfile', 'user_id', 'id');
+    }
+    
+    // Job relationships
+    public function posted_jobs()
+    {
+        return $this->hasMany('Models\Job', 'user_id', 'id')
+            ->where('is_active', 1);
+    }
+    
+    public function job_applications()
+    {
+        return $this->hasMany('Models\JobApplication', 'user_id', 'id');
+    }
+    
+    // Project relationships
+    public function client_projects()
+    {
+        return $this->hasMany('Models\Project', 'client_id', 'id');
+    }
+    
+    public function freelancer_projects()
+    {
+        return $this->hasMany('Models\Project', 'freelancer_id', 'id');
+    }
+    
+    // Portfolio relationships
+    public function portfolios()
+    {
+        return $this->hasMany('Models\Portfolio', 'user_id', 'id')
+            ->where('is_active', 1);
+    }
+    
+    // Contest relationships
+    public function contests()
+    {
+        return $this->hasMany('Models\Contest', 'user_id', 'id');
+    }
+    
+    public function contest_entries()
+    {
+        return $this->hasMany('Models\ContestEntry', 'user_id', 'id');
+    }
+    
+    // Service relationships
+    public function services()
+    {
+        return $this->hasMany('Models\Service', 'user_id', 'id')
+            ->where('is_active', 1);
+    }
+    
+    // Financial relationships
+    public function cash_withdrawals()
+    {
+        return $this->hasMany('Models\UserCashWithdrawal', 'user_id', 'id');
+    }
+    
+    public function money_transfer_accounts()
+    {
+        return $this->hasMany('Models\MoneyTransferAccount', 'user_id', 'id');
+    }
+    
+    // Review relationships
+    public function given_reviews()
+    {
+        return $this->hasMany('Models\Review', 'reviewer_id', 'id');
+    }
+    
+    public function received_reviews()
+    {
+        return $this->hasMany('Models\Review', 'reviewee_id', 'id');
+    }
+    
+    // Activity relationships
+    public function activities()
+    {
+        return $this->hasMany('Models\Activity', 'user_id', 'id')
+            ->orderBy('created_at', 'desc');
+    }
+    
+    // Follower relationships
+    public function followers()
+    {
+        return $this->belongsToMany('Models\User', 'followers', 'following_id', 'follower_id');
+    }
+    
+    public function following()
+    {
+        return $this->belongsToMany('Models\User', 'followers', 'follower_id', 'following_id');
+    }
+    
+    // Attachment relationships
+    public function attachments()
+    {
+        return $this->hasMany('Models\Attachment', 'user_id', 'id');
+    }
+    
+    public function avatar()
+    {
+        return $this->hasOne('Models\Attachment', 'foreign_id', 'id')
+            ->where('class', 'UserAvatar');
     }
 }

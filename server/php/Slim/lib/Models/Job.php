@@ -69,10 +69,71 @@ class Job extends AppModel
         'minimum_experience' => 'integer',
         'maximum_experience' => 'integer'
     );
+
+    // User relationships
     public function user()
     {
-        return $this->belongsTo('Models\User', 'user_id', 'id')->select('id', 'username', 'total_rating_as_employer', 'review_count_as_employer', 'total_rating_as_freelancer', 'review_count_as_freelancer', 'is_made_deposite', 'job_count', 'project_count', 'first_name', 'last_name', 'contest_count', 'is_made_deposite')->with('attachment');
+        return $this->belongsTo('Models\User', 'user_id', 'id')
+            ->select('id', 'username', 'email');
     }
+
+    // Application relationships
+    public function applications()
+    {
+        return $this->hasMany('Models\JobApplication', 'job_id', 'id');
+    }
+
+    public function accepted_application()
+    {
+        return $this->hasOne('Models\JobApplication', 'job_id', 'id')
+            ->where('status', 'accepted');
+    }
+
+    // Category relationships
+    public function category()
+    {
+        return $this->belongsTo('Models\Category', 'category_id', 'id');
+    }
+
+    public function subcategory()
+    {
+        return $this->belongsTo('Models\Category', 'subcategory_id', 'id');
+    }
+
+    // Skill relationships
+    public function skills()
+    {
+        return $this->belongsToMany('Models\Skill', 'job_skills', 'job_id', 'skill_id');
+    }
+
+    // Attachment relationships
+    public function attachments()
+    {
+        return $this->hasMany('Models\Attachment', 'foreign_id', 'id')
+            ->where('class', 'JobAttachment');
+    }
+
+    // Flag relationships
+    public function flags()
+    {
+        return $this->hasMany('Models\Flag', 'foreign_id', 'id')
+            ->where('class', 'Job');
+    }
+
+    // View relationships
+    public function views()
+    {
+        return $this->hasMany('Models\View', 'foreign_id', 'id')
+            ->where('class', 'Job');
+    }
+
+    // Activity relationships
+    public function activities()
+    {
+        return $this->hasMany('Models\Activity', 'foreign_id', 'id')
+            ->where('class', 'Job');
+    }
+
     public function job_status()
     {
         return $this->belongsTo('Models\JobStatus', 'job_status_id', 'id');

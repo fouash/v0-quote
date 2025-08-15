@@ -1,0 +1,192 @@
+<div class="rfq-listing" ng-controller="RfqCtrl">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Filters Sidebar -->
+            <div class="col-md-3">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4>Filter RFQs</h4>
+                    </div>
+                    <div class="panel-body">
+                        <form ng-submit="applyFilters()">
+                            <div class="form-group">
+                                <label>Category</label>
+                                <select ng-model="filters.category_id" class="form-control">
+                                    <option value="">All Categories</option>
+                                    <option ng-repeat="category in categories" value="{{category.id}}">
+                                        {{category.name}}
+                                    </option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Budget Range</label>
+                                <div class="row">
+                                    <div class="col-xs-6">
+                                        <input type="number" ng-model="filters.budget_min" 
+                                               placeholder="Min" class="form-control">
+                                    </div>
+                                    <div class="col-xs-6">
+                                        <input type="number" ng-model="filters.budget_max" 
+                                               placeholder="Max" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Location</label>
+                                <input type="text" ng-model="filters.location" 
+                                       placeholder="City, Country" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select ng-model="filters.status" class="form-control">
+                                    <option value="">All Status</option>
+                                    <option value="open">Open</option>
+                                    <option value="closed">Closed</option>
+                                    <option value="awarded">Awarded</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-block">
+                                Apply Filters
+                            </button>
+                            <button type="button" ng-click="clearFilters()" 
+                                    class="btn btn-default btn-block">
+                                Clear Filters
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- RFQ List -->
+            <div class="col-md-9">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4>Request for Quotes</h4>
+                            </div>
+                            <div class="col-md-6 text-right" ng-if="user.role === 'buyer'">
+                                <a href="#/rfq/create" class="btn btn-success">
+                                    <i class="fa fa-plus"></i> Create RFQ
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <!-- Loading State -->
+                        <div ng-if="loading" class="text-center">
+                            <i class="fa fa-spinner fa-spin fa-2x"></i>
+                            <p>Loading RFQs...</p>
+                        </div>
+                        
+                        <!-- No Results -->
+                        <div ng-if="!loading && rfqs.length === 0" class="text-center">
+                            <i class="fa fa-search fa-3x text-muted"></i>
+                            <h4>No RFQs Found</h4>
+                            <p class="text-muted">Try adjusting your filters or check back later.</p>
+                        </div>
+                        
+                        <!-- RFQ Cards -->
+                        <div ng-if="!loading && rfqs.length > 0">
+                            <div ng-repeat="rfq in rfqs" class="rfq-card panel panel-default">
+                                <div class="panel-body">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <h4>
+                                                <a href="#/rfq/{{rfq.id}}/{{rfq.slug_title}}" 
+                                                   class="text-primary">
+                                                    {{rfq.title}}
+                                                </a>
+                                                <span class="label label-{{rfq.status === 'open' ? 'success' : 'default'}}">
+                                                    {{rfq.status | uppercase}}
+                                                </span>
+                                            </h4>
+                                            
+                                            <p class="text-muted">
+                                                {{rfq.description | limitTo:200}}
+                                                <span ng-if="rfq.description.length > 200">...</span>
+                                            </p>
+                                            
+                                            <div class="rfq-meta">
+                                                <span class="label label-info">{{rfq.category.name}}</span>
+                                                <span ng-if="rfq.tags.length > 0">
+                                                    <span ng-repeat="tag in rfq.tags | limitTo:3" 
+                                                          class="label label-default">{{tag}}</span>
+                                                </span>
+                                            </div>
+                                            
+                                            <div class="rfq-details mt-2">
+                                                <small class="text-muted">
+                                                    <i class="fa fa-user"></i> {{rfq.buyer.username}} |
+                                                    <i class="fa fa-clock-o"></i> {{timeAgo(rfq.created_at)}} |
+                                                    <i class="fa fa-map-marker"></i> 
+                                                    {{rfq.location.city}}, {{rfq.location.country}}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-4 text-right">
+                                            <div class="rfq-budget">
+                                                <h5 class="text-success">
+                                                    {{formatCurrency(rfq.budget_min, rfq.currency)}} - 
+                                                    {{formatCurrency(rfq.budget_max, rfq.currency)}}
+                                                </h5>
+                                            </div>
+                                            
+                                            <div class="rfq-stats">
+                                                <span class="badge">{{rfq.bid_count || 0}} Bids</span>
+                                                <span ng-if="rfq.closing_at" class="text-danger">
+                                                    <i class="fa fa-clock-o"></i> 
+                                                    Closes {{timeAgo(rfq.closing_at)}}
+                                                </span>
+                                            </div>
+                                            
+                                            <div class="mt-2">
+                                                <a href="#/rfq/{{rfq.id}}/{{rfq.slug_title}}" 
+                                                   class="btn btn-primary btn-sm">
+                                                    View Details
+                                                </a>
+                                                <button ng-if="user.role === 'vendor' && rfq.status === 'open'" 
+                                                        class="btn btn-success btn-sm">
+                                                    Place Bid
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <div ng-if="!loading && rfqs.length > 0" class="text-center">
+                            <nav>
+                                <ul class="pagination">
+                                    <li ng-class="{disabled: pagination.current_page === 1}">
+                                        <a href="#" ng-click="goToPage(pagination.current_page - 1)">
+                                            <span>&laquo;</span>
+                                        </a>
+                                    </li>
+                                    
+                                    <li ng-repeat="page in [] | range:1:(pagination.total / pagination.per_page | ceil)" 
+                                        ng-class="{active: page === pagination.current_page}">
+                                        <a href="#" ng-click="goToPage(page)">{{page}}</a>
+                                    </li>
+                                    
+                                    <li ng-class="{disabled: pagination.current_page === (pagination.total / pagination.per_page | ceil)}">
+                                        <a href="#" ng-click="goToPage(pagination.current_page + 1)">
+                                            <span>&raquo;</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

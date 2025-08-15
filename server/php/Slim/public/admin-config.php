@@ -1325,6 +1325,129 @@ $tables = array(
                 ) ,
                 12 => array(
                     'name' => 'phone',
+// Add RFQ and Bid tables to existing configuration
+
+$rfq_tables = array(
+    'rfqs' => array(
+        'listview' => array(
+            'fields' => array(
+                0 => array(
+                    'name' => 'id',
+                    'label' => 'ID',
+                    'template' => '<a href="#/rfqs/show/{{entry.values.id}}">{{entry.values.id}}</a>',
+                ),
+                1 => array(
+                    'name' => 'title',
+                    'label' => 'Title',
+                ),
+                2 => array(
+                    'name' => 'buyer.username',
+                    'label' => 'Buyer',
+                ),
+                3 => array(
+                    'name' => 'category.name',
+                    'label' => 'Category',
+                ),
+                4 => array(
+                    'name' => 'budget_min',
+                    'label' => 'Min Budget',
+                ),
+                5 => array(
+                    'name' => 'budget_max',
+                    'label' => 'Max Budget',
+                ),
+                6 => array(
+                    'name' => 'status',
+                    'label' => 'Status',
+                ),
+                7 => array(
+                    'name' => 'bid_count',
+                    'template' => '<a href="#/bids/list?search=%7B%22rfq_id%22:{{entry.values.id}}%7D">{{entry.values.bid_count}}</a>',
+                    'label' => 'Bids',
+                ),
+                8 => array(
+                    'name' => 'created_at',
+                    'label' => 'Created On',
+                ),
+            ),
+            'title' => 'RFQs',
+            'perPage' => '10',
+            'filters' => array(
+                0 => array(
+                    'name' => 'q',
+                    'pinned' => true,
+                    'label' => 'Search',
+                    'type' => 'template',
+                    'template' => '<div class="input-group"><input type="text" ng-model="value" placeholder="Search RFQs" class="form-control"></input><span class="input-group-addon"><i class="fa fa-search text-primary"></i></span></div>',
+                ),
+                1 => array(
+                    'name' => 'status',
+                    'label' => 'Status',
+                    'type' => 'choice',
+                    'choices' => array(
+                        0 => array('label' => 'Open', 'value' => 'open'),
+                        1 => array('label' => 'Closed', 'value' => 'closed'),
+                        2 => array('label' => 'Awarded', 'value' => 'awarded'),
+                        3 => array('label' => 'Cancelled', 'value' => 'cancelled'),
+                    ),
+                ),
+                2 => array(
+                    'name' => 'category_id',
+                    'label' => 'Category',
+                    'targetEntity' => 'categories',
+                    'targetField' => 'name',
+                    'type' => 'reference',
+                    'remoteComplete' => true,
+                ),
+            ),
+        ),
+    ),
+    'bids' => array(
+        'listview' => array(
+            'fields' => array(
+                0 => array(
+                    'name' => 'id',
+                    'label' => 'ID',
+                    'template' => '<a href="#/bids/show/{{entry.values.id}}">{{entry.values.id}}</a>',
+                ),
+                1 => array(
+                    'name' => 'rfq.title',
+                    'label' => 'RFQ',
+                ),
+                2 => array(
+                    'name' => 'vendor.username',
+                    'label' => 'Vendor',
+                ),
+                3 => array(
+                    'name' => 'amount',
+                    'label' => 'Amount',
+                ),
+                4 => array(
+                    'name' => 'delivery_days',
+                    'label' => 'Delivery Days',
+                ),
+                5 => array(
+                    'name' => 'status',
+                    'label' => 'Status',
+                ),
+                6 => array(
+                    'name' => 'awarded',
+                    'label' => 'Awarded',
+                    'type' => 'boolean',
+                ),
+                7 => array(
+                    'name' => 'created_at',
+                    'label' => 'Created On',
+                ),
+            ),
+            'title' => 'Bids',
+            'perPage' => '10',
+        ),
+    ),
+);
+
+// Merge with existing tables
+$tables = array_merge($tables, $rfq_tables);
                     'label' => 'Phone',
                     'validation' => array(
                         'required' => true,

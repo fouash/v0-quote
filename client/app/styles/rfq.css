@@ -1,0 +1,98 @@
+.rfq-create .form-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.rfq-create .form-section:last-child {
+    border-bottom: none;
+}
+
+.rfq-create .form-section h4 {
+    color: #333;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.rfq-create .form-actions {
+    text-align: center;
+    padding: 30px 0;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+.rfq-create .form-actions .btn {
+    margin: 0 10px 10px 0;
+}
+
+.rfq-create .form-summary {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.rfq-create .form-summary ul li {
+    margin-bottom: 5px;
+}
+
+.rfq-create .file-upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 5px;
+    padding: 40px;
+    text-align: center;
+    transition: border-color 0.3s ease;
+    cursor: pointer;
+}
+
+.rfq-create .file-upload-area:hover,
+.rfq-create .file-upload-area.dragover {
+    border-color: #337ab7;
+    background-color: #f5f5f5;
+}
+
+.rfq-create .uploaded-files {
+    margin-top: 15px;
+}
+
+.rfq-create .file-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+
+.rfq-create .file-item i {
+    margin-right: 8px;
+    color: #6c757d;
+}
+
+.rfq-create .file-item .file-size {
+    margin-left: auto;
+    margin-right: 10px;
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+.rfq-preview .rfq-meta {
+    margin-bottom: 20px;
+}
+
+.rfq-preview .rfq-meta .badge {
+    margin-right: 10px;
+}
+
+.rfq-preview .rfq-meta .budget,
+.rfq-preview .rfq-meta .duration {
+    margin-right: 15px;
+    color: #666;
+}
+
+.rfq-preview h5 {
+    color: #333;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-weight: 600;
+}

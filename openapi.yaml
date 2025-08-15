@@ -1,0 +1,342 @@
+openapi: 3.0.0
+info:
+  title: RFQ Bidding Platform API
+  description: API for the RFQ Bidding Platform, based on the provided blueprint.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+paths:
+  /rfq:
+    get:
+      summary: Browse and filter RFQs
+      description: Retrieves a list of RFQs, with optional filtering and pagination.
+      tags:
+        - RFQ
+      responses:
+        '200':
+          description: A list of RFQs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RFQ'
+    post:
+      summary: Create a new RFQ
+      description: Creates a new RFQ. Requires authentication as a 'buyer'.
+      tags:
+        - RFQ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewRFQ'
+      responses:
+        '201':
+          description: RFQ created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RFQ'
+
+  /rfq/{id}:
+    get:
+      summary: Get a single RFQ by ID
+      description: Retrieves the details of a specific RFQ.
+      tags:
+        - RFQ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The requested RFQ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RFQ'
+        '404':
+          description: RFQ not found.
+    put:
+      summary: Update an RFQ
+      description: Updates an existing RFQ. Requires authentication as the 'buyer' who owns the RFQ.
+      tags:
+        - RFQ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewRFQ'
+      responses:
+        '200':
+          description: RFQ updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RFQ'
+
+  /rfq/{id}/close:
+    post:
+      summary: Close an RFQ
+      description: Closes an RFQ to new bids. Requires authentication as the 'buyer' who owns the RFQ.
+      tags:
+        - RFQ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: RFQ closed successfully.
+
+  /rfq/{id}/related:
+    get:
+      summary: Get related RFQs
+      description: Retrieves a list of RFQs related to the specified RFQ.
+      tags:
+        - RFQ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A list of related RFQs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RFQ'
+
+  /rfq/{rfqId}/bids:
+    get:
+      summary: List bids for an RFQ
+      description: Retrieves all bids for a specific RFQ. Requires authentication as the RFQ owner or a vendor who has bid.
+      tags:
+        - Bids
+      parameters:
+        - name: rfqId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A list of bids for the RFQ.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bid'
+    post:
+      summary: Create a new bid
+      description: Creates a new bid on an RFQ. Requires authentication as a 'vendor'.
+      tags:
+        - Bids
+      parameters:
+        - name: rfqId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewBid'
+      responses:
+        '201':
+          description: Bid created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bid'
+
+  /bids/{id}:
+    put:
+      summary: Update a bid
+      description: Updates an existing bid. Requires authentication as the 'vendor' who owns the bid.
+      tags:
+        - Bids
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewBid'
+      responses:
+        '200':
+          description: Bid updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bid'
+
+  /bids/{id}/award:
+    post:
+      summary: Award a bid
+      description: Awards a bid to a vendor. Requires authentication as the 'buyer' who owns the corresponding RFQ.
+      tags:
+        - Bids
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Bid awarded successfully.
+
+  /bids/{id}/retract:
+    post:
+      summary: Retract a bid
+      description: Retracts a bid from an RFQ. Requires authentication as the 'vendor' who owns the bid.
+      tags:
+        - Bids
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Bid retracted successfully.
+
+components:
+  schemas:
+    RFQ:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        slug_title:
+          type: string
+        description:
+          type: string
+        buyer_id:
+          type: string
+          format: uuid
+        category_id:
+          type: integer
+        subcategory_id:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+        budget_min:
+          type: number
+        budget_max:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [open, closed, awarded, cancelled]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    NewRFQ:
+      type: object
+      required:
+        - title
+        - description
+        - category_id
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category_id:
+          type: integer
+        subcategory_id:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+        budget_min:
+          type: number
+        budget_max:
+          type: number
+        currency:
+          type: string
+    Bid:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        rfq_id:
+          type: integer
+          format: int64
+        vendor_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+        currency:
+          type: string
+        delivery_days:
+          type: integer
+        message:
+          type: string
+        status:
+          type: string
+          enum: [submitted, retracted, accepted, rejected]
+        awarded:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    NewBid:
+      type: object
+      required:
+        - amount
+        - delivery_days
+      properties:
+        amount:
+          type: number
+        currency:
+          type: string
+        delivery_days:
+          type: integer
+        message:
+          type: string

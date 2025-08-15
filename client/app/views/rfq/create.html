@@ -1,0 +1,392 @@
+<div class="rfq-create" ng-controller="RfqCreateCtrl">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3>Create New RFQ</h3>
+                        <p class="text-muted">Post your project requirements and receive bids from qualified vendors</p>
+                    </div>
+                    
+                    <div class="panel-body">
+                        <form name="rfqForm" ng-submit="createRfq()" novalidate>
+                            <!-- Basic Information -->
+                            <div class="form-section">
+                                <h4>Basic Information</h4>
+                                
+                                <div class="form-group">
+                                    <label for="title">Project Title *</label>
+                                    <input type="text" id="title" name="title" 
+                                           ng-model="rfq.title" class="form-control" 
+                                           placeholder="Enter a clear, descriptive title for your project"
+                                           required maxlength="100">
+                                    <div ng-show="rfqForm.title.$invalid && rfqForm.title.$touched" 
+                                         class="text-danger">
+                                        <small ng-show="rfqForm.title.$error.required">Title is required</small>
+                                        <small ng-show="rfqForm.title.$error.maxlength">Title must be less than 100 characters</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="category">Category *</label>
+                                    <select id="category" name="category" 
+                                            ng-model="rfq.category_id" class="form-control" required>
+                                        <option value="">Select a category</option>
+                                        <option ng-repeat="category in categories" 
+                                                value="{{category.id}}">{{category.name}}</option>
+                                    </select>
+                                    <div ng-show="rfqForm.category.$invalid && rfqForm.category.$touched" 
+                                         class="text-danger">
+                                        <small ng-show="rfqForm.category.$error.required">Category is required</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="description">Project Description *</label>
+                                    <textarea id="description" name="description" 
+                                              ng-model="rfq.description" class="form-control" 
+                                              rows="6" required
+                                              placeholder="Provide detailed description of your project requirements, deliverables, and expectations"></textarea>
+                                    <div ng-show="rfqForm.description.$invalid && rfqForm.description.$touched" 
+                                         class="text-danger">
+                                        <small ng-show="rfqForm.description.$error.required">Description is required</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Budget Information -->
+                            <div class="form-section">
+                                <h4>Budget & Timeline</h4>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="budget_min">Minimum Budget *</label>
+                                            <div class="input-group">
+                                                <span class="input-group-addon">{{rfq.currency || '}}</span>
+                                                <input type="number" id="budget_min" name="budget_min" 
+                                                       ng-model="rfq.budget_min" class="form-control" 
+                                                       min="1" step="0.01" required>
+                                            </div>
+                                            <div ng-show="rfqForm.budget_min.$invalid && rfqForm.budget_min.$touched" 
+                                                 class="text-danger">
+                                                <small ng-show="rfqForm.budget_min.$error.required">Minimum budget is required</small>
+                                                <small ng-show="rfqForm.budget_min.$error.min">Budget must be greater than 0</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="budget_max">Maximum Budget *</label>
+                                            <div class="input-group">
+                                                <span class="input-group-addon">{{rfq.currency || '}}</span>
+                                                <input type="number" id="budget_max" name="budget_max" 
+                                                       ng-model="rfq.budget_max" class="form-control" 
+                                                       min="1" step="0.01" required>
+                                            </div>
+                                            <div ng-show="rfqForm.budget_max.$invalid && rfqForm.budget_max.$touched" 
+                                                 class="text-danger">
+                                                <small ng-show="rfqForm.budget_max.$error.required">Maximum budget is required</small>
+                                                <small ng-show="rfqForm.budget_max.$error.min">Budget must be greater than 0</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="currency">Currency</label>
+                                            <select id="currency" ng-model="rfq.currency" class="form-control">
+                                                <option value="USD">USD - US Dollar</option>
+                                                <option value="EUR">EUR - Euro</option>
+                                                <option value="GBP">GBP - British Pound</option>
+                                                <option value="SAR">SAR - Saudi Riyal</option>
+                                                <option value="AED">AED - UAE Dirham</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="duration">Project Duration (days)</label>
+                                            <input type="number" id="duration" 
+                                                   ng-model="rfq.duration_days" class="form-control" 
+                                                   min="1" placeholder="Expected project duration">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Organization Selection -->
+                            <div class="form-section">
+                                <h4>Organization Details</h4>
+                                
+                                <div class="form-group">
+                                    <label for="organization">Select Organization *</label>
+                                    <select id="organization" name="organization" 
+                                            ng-model="rfq.organization_id" class="form-control" required>
+                                        <option value="">Select your organization</option>
+                                        <option ng-repeat="org in userOrganizations" 
+                                                value="{{org.OrganizationID}}">
+                                            {{org.OrganizationName}} ({{org.OrganizationType}})
+                                        </option>
+                                    </select>
+                                    <div ng-show="rfqForm.organization.$invalid && rfqForm.organization.$touched" 
+                                         class="text-danger">
+                                        <small ng-show="rfqForm.organization.$error.required">Organization is required</small>
+                                    </div>
+                                    <small class="text-muted">
+                                        Don't see your organization? 
+                                        <a href="#/organizations/create">Create a new organization</a>
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- Requirements & Skills -->
+                            <div class="form-section">
+                                <h4>Requirements & Skills</h4>
+                                
+                                <div class="form-group">
+                                    <label for="skills">Required Skills</label>
+                                    <input type="text" id="skills" ng-model="rfq.skills_text" 
+                                           class="form-control" 
+                                           placeholder="Enter skills separated by commas (e.g., PHP, JavaScript, MySQL)">
+                                    <small class="text-muted">Separate multiple skills with commas</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="requirements">Special Requirements</label>
+                                    <textarea id="requirements" ng-model="rfq.requirements" 
+                                              class="form-control" rows="4"
+                                              placeholder="Any special requirements, certifications, or qualifications needed"></textarea>
+                                </div>
+                            </div>
+                            
+                            <!-- Attachments -->
+                            <div class="form-section">
+                                <h4>Attachments</h4>
+                                
+                                <div class="form-group">
+                                    <label>Project Files</label>
+                                    <div class="file-upload-area" 
+                                         ng-file-drop="onFileSelect($files)" 
+                                         ng-file-drag-over-class="dragover">
+                                        <div class="text-center">
+                                            <i class="fa fa-cloud-upload fa-3x text-muted"></i>
+                                            <p>Drag and drop files here or 
+                                               <button type="button" class="btn btn-link" 
+                                                       ng-file-select="onFileSelect($files)" multiple>
+                                                   click to browse
+                                               </button>
+                                            </p>
+                                            <small class="text-muted">
+                                                Supported formats: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (Max 10MB each)
+                                            </small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div ng-if="rfq.attachments.length > 0" class="uploaded-files">
+                                        <h6>Uploaded Files:</h6>
+                                        <div ng-repeat="file in rfq.attachments" class="file-item">
+                                            <i class="fa fa-file"></i>
+                                            <span>{{file.name}}</span>
+                                            <span class="file-size">({{formatFileSize(file.size)}})</span>
+                                            <button type="button" class="btn btn-xs btn-danger" 
+                                                    ng-click="removeFile($index)">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Bidding Settings -->
+                            <div class="form-section">
+                                <h4>Bidding Settings</h4>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="closing_date">Bidding Closes On</label>
+                                            <input type="datetime-local" id="closing_date" 
+                                                   ng-model="rfq.closing_at" class="form-control"
+                                                   min="{{getMinDate()}}">
+                                            <small class="text-muted">Leave empty for no deadline</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="max_bids">Maximum Number of Bids</label>
+                                            <input type="number" id="max_bids" 
+                                                   ng-model="rfq.max_bids" class="form-control" 
+                                                   min="1" max="100" placeholder="No limit">
+                                            <small class="text-muted">Leave empty for unlimited bids</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <div class="checkbox">
+                                        <label>
+                                            <input type="checkbox" ng-model="rfq.is_private">
+                                            Private RFQ (Only invited vendors can bid)
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div ng-if="rfq.is_private" class="form-group">
+                                    <label>Invite Vendors</label>
+                                    <input type="text" ng-model="rfq.invited_vendors" 
+                                           class="form-control" 
+                                           placeholder="Enter vendor usernames separated by commas">
+                                    <small class="text-muted">
+                                        Separate multiple usernames with commas
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- Form Actions -->
+                            <div class="form-section">
+                                <div class="form-actions">
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <button type="submit" class="btn btn-primary btn-lg" 
+                                                    ng-disabled="rfqForm.$invalid || isSubmitting">
+                                                <i class="fa fa-paper-plane" ng-if="!isSubmitting"></i>
+                                                <i class="fa fa-spinner fa-spin" ng-if="isSubmitting"></i>
+                                                {{isSubmitting ? 'Publishing RFQ...' : 'Publish RFQ'}}
+                                            </button>
+                                            
+                                            <button type="button" class="btn btn-default btn-lg" 
+                                                    ng-click="saveDraft()" 
+                                                    ng-disabled="isSubmitting">
+                                                <i class="fa fa-save"></i>
+                                                Save as Draft
+                                            </button>
+                                            
+                                            <button type="button" class="btn btn-link" 
+                                                    ng-click="previewRfq()" 
+                                                    ng-disabled="rfqForm.$invalid">
+                                                <i class="fa fa-eye"></i>
+                                                Preview
+                                            </button>
+                                            
+                                            <a href="#/rfq" class="btn btn-link">
+                                                <i class="fa fa-times"></i>
+                                                Cancel
+                                            </a>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Form Summary -->
+                                    <div class="form-summary" ng-if="rfqForm.$invalid">
+                                        <div class="alert alert-warning">
+                                            <h6><i class="fa fa-exclamation-triangle"></i> Please complete the following required fields:</h6>
+                                            <ul class="list-unstyled">
+                                                <li ng-if="rfqForm.title.$invalid && rfqForm.title.$touched">
+                                                    <i class="fa fa-circle"></i> Project Title
+                                                </li>
+                                                <li ng-if="rfqForm.category.$invalid && rfqForm.category.$touched">
+                                                    <i class="fa fa-circle"></i> Category
+                                                </li>
+                                                <li ng-if="rfqForm.description.$invalid && rfqForm.description.$touched">
+                                                    <i class="fa fa-circle"></i> Project Description
+                                                </li>
+                                                <li ng-if="rfqForm.budget_min.$invalid && rfqForm.budget_min.$touched">
+                                                    <i class="fa fa-circle"></i> Minimum Budget
+                                                </li>
+                                                <li ng-if="rfqForm.budget_max.$invalid && rfqForm.budget_max.$touched">
+                                                    <i class="fa fa-circle"></i> Maximum Budget
+                                                </li>
+                                                <li ng-if="rfqForm.organization.$invalid && rfqForm.organization.$touched">
+                                                    <i class="fa fa-circle"></i> Organization
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- RFQ Preview Modal -->
+    <div class="modal fade" id="rfqPreviewModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                    <h4 class="modal-title">RFQ Preview</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="rfq-preview">
+                        <h3>{{rfq.title}}</h3>
+                        <div class="rfq-meta">
+                            <span class="badge">{{getCategoryName(rfq.category_id)}}</span>
+                            <span class="budget">
+                                Budget: {{rfq.currency}}{{rfq.budget_min | number:2}} - {{rfq.currency}}{{rfq.budget_max | number:2}}
+                            </span>
+                            <span ng-if="rfq.duration_days" class="duration">
+                                Duration: {{rfq.duration_days}} days
+                            </span>
+                        </div>
+                        
+                        <div class="rfq-description">
+                            <h5>Description</h5>
+                            <p>{{rfq.description}}</p>
+                        </div>
+                        
+                        <div ng-if="rfq.skills_text" class="rfq-skills">
+                            <h5>Required Skills</h5>
+                            <p>{{rfq.skills_text}}</p>
+                        </div>
+                        
+                        <div ng-if="rfq.requirements" class="rfq-requirements">
+                            <h5>Special Requirements</h5>
+                            <p>{{rfq.requirements}}</p>
+                        </div>
+                        
+                        <div ng-if="rfq.attachments.length > 0" class="rfq-attachments">
+                            <h5>Attachments</h5>
+                            <ul>
+                                <li ng-repeat="file in rfq.attachments">{{file.name}}</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="rfq-settings">
+                            <h5>Bidding Settings</h5>
+                            <ul class="list-unstyled">
+                                <li ng-if="rfq.closing_at">
+                                    <strong>Closes:</strong> {{rfq.closing_at | date:'medium'}}
+                                </li>
+                                <li ng-if="rfq.max_bids">
+                                    <strong>Max Bids:</strong> {{rfq.max_bids}}
+                                </li>
+                                <li ng-if="rfq.is_private">
+                                    <strong>Type:</strong> Private RFQ
+                                </li>
+                                <li ng-if="!rfq.is_private">
+                                    <strong>Type:</strong> Public RFQ
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" ng-click="publishFromPreview()">
+                        Publish RFQ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

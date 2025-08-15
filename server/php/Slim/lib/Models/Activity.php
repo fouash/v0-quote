@@ -31,7 +31,9 @@ class Activity extends AppModel
     }
     public function other_user()
     {
-        return $this->belongsTo('Models\User', 'other_user_id', 'id')->select('id', 'username')->with('foreign_attachment');
+        return $this->belongsTo('Models\User', 'other_user_id', 'id')
+            ->select('id', 'username')
+            ->with('foreign_attachment');
     }
     public function foreign()
     {

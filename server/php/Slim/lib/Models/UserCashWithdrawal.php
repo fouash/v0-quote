@@ -38,7 +38,8 @@ class UserCashWithdrawal extends AppModel
     );
     public function user()
     {
-        return $this->belongsTo('Models\User', 'user_id', 'id')->select('id', 'username', 'email');
+        return $this->belongsTo('Models\User', 'user_id', 'id')
+            ->select('id', 'username', 'email');
     }
     public function money_transfer_account()
     {
@@ -46,7 +47,9 @@ class UserCashWithdrawal extends AppModel
     }
     public function activity()
     {
-        return $this->belongsTo('Models\UserCashWithdrawal', 'id', 'id')->select('id', 'user_id', 'money_transfer_account_id')->with('foreign_user', 'money_transfer_account');
+        return $this->hasOne('Models\Activity', 'user_cash_withdrawal_id', 'id')
+            ->select('id', 'user_id', 'activity_type', 'created_at')
+            ->with('user');
     }
     public function foreign_user()
     {
