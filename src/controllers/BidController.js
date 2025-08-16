@@ -1,5 +1,12 @@
 // src/controllers/BidController.js
 
+const sanitizeForLog = (input) => {
+    if (typeof input === 'string') {
+        return input.replace(/[\r\n\t]/g, ' ').substring(0, 200);
+    }
+    return String(input).substring(0, 200);
+};
+
 const handleErrors = (err, res) => {
     if (err.message.includes('Invalid ID')) {
         return res.status(400).json({ success: false, message: err.message });
@@ -13,7 +20,7 @@ const handleErrors = (err, res) => {
     if (err.message.includes('required') || err.message.includes('must be')) {
         return res.status(400).json({ success: false, message: err.message });
     }
-    console.error('Unexpected error:', err);
+    console.error('Unexpected error:', sanitizeForLog(err.message));
     res.status(500).json({ success: false, message: "An internal server error occurred." });
 };
 

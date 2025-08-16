@@ -17,16 +17,19 @@ class RFQService {
 
     async find(query = {}) {
         const { limit = 20, offset = 0, category_id } = query;
+        const safeLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+        const safeOffset = Math.max(parseInt(offset) || 0, 0);
+        
         let sql = 'SELECT * FROM rfqs';
         const params = [];
         
-        if (category_id) {
+        if (category_id && !isNaN(category_id)) {
             sql += ' WHERE category_id = $1';
-            params.push(category_id);
+            params.push(parseInt(category_id));
         }
         
-        sql += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2);
-        params.push(limit, offset);
+        sql += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+        params.push(safeLimit, safeOffset);
         
         const { rows } = await db.query(sql, params);
         return rows;
@@ -48,11 +51,21 @@ class RFQService {
             throw new Error('Buyer ID is required');
         }
         
-        const { rows } = await db.query(
-            'INSERT INTO rfqs (title, description, buyer_id, category_id, subcategory_id, budget_min, budget_max, currency) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-            [title, description, buyer_id, category_id, subcategory_id, budget_min, budget_max, currency]
-        );
-        return rows[0];
+        try {
+            const { rows } = await db.query(
+                'INSERT INTO rfqs (title, description, buyer_id, category_id, subcategory_id, budget_min, budget_max, currency) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+                [title, description, buyer_id, category_id, subcategory_id, budget_min, budget_max, currency]
+            );
+            return rows[0];
+        } catch (error) {
+            if (error.code === '23505') {
+                throw new Error('Duplicate RFQ entry');
+            }
+            if (error.code === '23503') {
+                throw new Error('Invalid category or buyer reference');
+            }
+            throw new Error('Database error: ' + error.message);
+        }
     }
 
     async update(id, rfqData, userId) {
@@ -60,22 +73,24 @@ class RFQService {
             throw new Error('Invalid ID provided');
         }
         
-        // Verify ownership
-        const existing = await this.findById(id);
-        if (!existing) {
-            throw new Error('RFQ not found');
-        }
-        if (existing.buyer_id !== userId) {
-            throw new Error('Unauthorized: You can only update your own RFQs');
-        }
-        
         this.validateRFQData(rfqData);
         const { title, description, category_id, subcategory_id, budget_min, budget_max, currency } = rfqData;
-        const { rows } = await db.query(
-            'UPDATE rfqs SET title = $1, description = $2, category_id = $3, subcategory_id = $4, budget_min = $5, budget_max = $6, currency = $7, updated_at = now() WHERE id = $8 AND buyer_id = $9 RETURNING *',
-            [title, description, category_id, subcategory_id, budget_min, budget_max, currency, id, userId]
-        );
-        return rows.length > 0 ? rows[0] : null;
+        
+        try {
+            const { rows } = await db.query(
+                'UPDATE rfqs SET title = $1, description = $2, category_id = $3, subcategory_id = $4, budget_min = $5, budget_max = $6, currency = $7, updated_at = now() WHERE id = $8 AND buyer_id = $9 RETURNING *',
+                [title, description, category_id, subcategory_id, budget_min, budget_max, currency, id, userId]
+            );
+            if (rows.length === 0) {
+                throw new Error('RFQ not found or unauthorized');
+            }
+            return rows[0];
+        } catch (error) {
+            if (error.message.includes('not found')) {
+                throw error;
+            }
+            throw new Error('Database error: ' + error.message);
+        }
     }
 
     async close(id, userId) {
@@ -83,32 +98,40 @@ class RFQService {
             throw new Error('Invalid ID provided');
         }
         
-        // Verify ownership
-        const existing = await this.findById(id);
-        if (!existing) {
-            throw new Error('RFQ not found');
+        try {
+            const { rows } = await db.query(
+                'UPDATE rfqs SET status = $1, updated_at = now() WHERE id = $2 AND buyer_id = $3 RETURNING *',
+                ['closed', id, userId]
+            );
+            if (rows.length === 0) {
+                throw new Error('RFQ not found or unauthorized');
+            }
+            return rows[0];
+        } catch (error) {
+            if (error.message.includes('not found')) {
+                throw error;
+            }
+            throw new Error('Database error: ' + error.message);
         }
-        if (existing.buyer_id !== userId) {
-            throw new Error('Unauthorized: You can only close your own RFQs');
-        }
-        
-        const { rows } = await db.query(
-            'UPDATE rfqs SET status = $1, updated_at = now() WHERE id = $2 AND buyer_id = $3 RETURNING *',
-            ['closed', id, userId]
-        );
-        return rows.length > 0 ? rows[0] : null;
     }
 
     async findRelated(id) {
-        // This is a simplified version of the related algorithm from the blueprint
-        const rfq = await this.findById(id);
-        if (!rfq) return [];
-
-        const { rows } = await db.query(
-            'SELECT * FROM rfqs WHERE category_id = $1 AND id != $2 AND status = \'open\' ORDER BY created_at DESC LIMIT 10',
-            [rfq.category_id, id]
-        );
-        return rows;
+        if (!id || isNaN(id)) {
+            throw new Error('Invalid ID provided');
+        }
+        
+        try {
+            const { rows } = await db.query(
+                `SELECT r2.* FROM rfqs r1 
+                 JOIN rfqs r2 ON r1.category_id = r2.category_id 
+                 WHERE r1.id = $1 AND r2.id != $1 AND r2.status = 'open' 
+                 ORDER BY r2.created_at DESC LIMIT 10`,
+                [id]
+            );
+            return rows;
+        } catch (error) {
+            throw new Error('Database error: ' + error.message);
+        }
     }
 }
 

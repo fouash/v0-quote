@@ -1,342 +1,552 @@
 openapi: 3.0.0
 info:
-  title: RFQ Bidding Platform API
-  description: API for the RFQ Bidding Platform, based on the provided blueprint.
-  version: 1.0.0
+  title: RFQ Quote Management API
+  version: 1.1.0
 servers:
   - url: http://localhost:3000/api
     description: Local development server
-
-paths:
-  /rfq:
-    get:
-      summary: Browse and filter RFQs
-      description: Retrieves a list of RFQs, with optional filtering and pagination.
-      tags:
-        - RFQ
-      responses:
-        '200':
-          description: A list of RFQs.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RFQ'
-    post:
-      summary: Create a new RFQ
-      description: Creates a new RFQ. Requires authentication as a 'buyer'.
-      tags:
-        - RFQ
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/NewRFQ'
-      responses:
-        '201':
-          description: RFQ created successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RFQ'
-
-  /rfq/{id}:
-    get:
-      summary: Get a single RFQ by ID
-      description: Retrieves the details of a specific RFQ.
-      tags:
-        - RFQ
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: The requested RFQ.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RFQ'
-        '404':
-          description: RFQ not found.
-    put:
-      summary: Update an RFQ
-      description: Updates an existing RFQ. Requires authentication as the 'buyer' who owns the RFQ.
-      tags:
-        - RFQ
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/NewRFQ'
-      responses:
-        '200':
-          description: RFQ updated successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RFQ'
-
-  /rfq/{id}/close:
-    post:
-      summary: Close an RFQ
-      description: Closes an RFQ to new bids. Requires authentication as the 'buyer' who owns the RFQ.
-      tags:
-        - RFQ
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: RFQ closed successfully.
-
-  /rfq/{id}/related:
-    get:
-      summary: Get related RFQs
-      description: Retrieves a list of RFQs related to the specified RFQ.
-      tags:
-        - RFQ
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: A list of related RFQs.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RFQ'
-
-  /rfq/{rfqId}/bids:
-    get:
-      summary: List bids for an RFQ
-      description: Retrieves all bids for a specific RFQ. Requires authentication as the RFQ owner or a vendor who has bid.
-      tags:
-        - Bids
-      parameters:
-        - name: rfqId
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: A list of bids for the RFQ.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Bid'
-    post:
-      summary: Create a new bid
-      description: Creates a new bid on an RFQ. Requires authentication as a 'vendor'.
-      tags:
-        - Bids
-      parameters:
-        - name: rfqId
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/NewBid'
-      responses:
-        '201':
-          description: Bid created successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Bid'
-
-  /bids/{id}:
-    put:
-      summary: Update a bid
-      description: Updates an existing bid. Requires authentication as the 'vendor' who owns the bid.
-      tags:
-        - Bids
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/NewBid'
-      responses:
-        '200':
-          description: Bid updated successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Bid'
-
-  /bids/{id}/award:
-    post:
-      summary: Award a bid
-      description: Awards a bid to a vendor. Requires authentication as the 'buyer' who owns the corresponding RFQ.
-      tags:
-        - Bids
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Bid awarded successfully.
-
-  /bids/{id}/retract:
-    post:
-      summary: Retract a bid
-      description: Retracts a bid from an RFQ. Requires authentication as the 'vendor' who owns the bid.
-      tags:
-        - Bids
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Bid retracted successfully.
-
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        role: { type: string, enum: [admin, buyer, vendor] }
+        name: { type: string }
+        email: { type: string, format: email }
+        slug: { type: string }
+        company_name: { type: string }
+        bio: { type: string }
+        phone: { type: string }
+        website: { type: string }
+        address: { type: object }
+        business_info: { type: object }
+        rating: { type: number }
+    PublicUser:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - properties:
+            email: { type: string, nullable: true }
+    Category:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        slug: { type: string }
+        parent_id: { type: integer, nullable: true }
+        metadata: { type: object }
     RFQ:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
-        title:
-          type: string
-        slug_title:
-          type: string
-        description:
-          type: string
-        buyer_id:
-          type: string
-          format: uuid
-        category_id:
-          type: integer
-        subcategory_id:
-          type: integer
-        tags:
-          type: array
-          items:
-            type: string
-        budget_min:
-          type: number
-        budget_max:
-          type: number
-        currency:
-          type: string
-        status:
-          type: string
-          enum: [open, closed, awarded, cancelled]
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+        id: { type: integer, format: int64 }
+        title: { type: string }
+        slug_title: { type: string }
+        description: { type: string }
+        buyer_id: { type: string, format: uuid }
+        category_id: { type: integer }
+        subcategory_id: { type: integer }
+        tags: { type: array, items: { type: string } }
+        budget_min: { type: number }
+        budget_max: { type: number }
+        currency: { type: string }
+        status: { type: string, enum: [open, closed, awarded, cancelled] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
     NewRFQ:
       type: object
-      required:
-        - title
-        - description
-        - category_id
+      required: [ title, description, category_id ]
       properties:
-        title:
-          type: string
-        description:
-          type: string
-        category_id:
-          type: integer
-        subcategory_id:
-          type: integer
-        tags:
-          type: array
-          items:
-            type: string
-        budget_min:
-          type: number
-        budget_max:
-          type: number
-        currency:
-          type: string
+        title: { type: string }
+        description: { type: string }
+        category_id: { type: integer }
+        subcategory_id: { type: integer }
+        tags: { type: array, items: { type: string } }
+        budget_min: { type: number }
+        budget_max: { type: number }
+        currency: { type: string }
     Bid:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
-        rfq_id:
-          type: integer
-          format: int64
-        vendor_id:
-          type: string
-          format: uuid
-        amount:
-          type: number
-        currency:
-          type: string
-        delivery_days:
-          type: integer
-        message:
-          type: string
-        status:
-          type: string
-          enum: [submitted, retracted, accepted, rejected]
-        awarded:
-          type: boolean
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+        id: { type: integer, format: int64 }
+        rfq_id: { type: integer, format: int64 }
+        vendor_id: { type: string, format: uuid }
+        amount: { type: number }
+        currency: { type: string }
+        delivery_days: { type: integer }
+        message: { type: string }
+        status: { type: string, enum: [submitted, retracted, accepted, rejected] }
+        awarded: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
     NewBid:
       type: object
-      required:
-        - amount
-        - delivery_days
+      required: [ amount, delivery_days ]
       properties:
-        amount:
-          type: number
-        currency:
-          type: string
-        delivery_days:
-          type: integer
-        message:
-          type: string
+        amount: { type: number }
+        currency: { type: string }
+        delivery_days: { type: integer }
+        message: { type: string }
+    Conversation:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        rfq_id: { type: integer }
+        buyer_id: { type: string, format: uuid }
+        vendor_id: { type: string, format: uuid }
+    Message:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        conversation_id: { type: integer }
+        sender_id: { type: string, format: uuid }
+        content: { type: string }
+        created_at: { type: string, format: date-time }
+    Notification:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        user_id: { type: string, format: uuid }
+        type: { type: string }
+        payload: { type: object }
+        read: { type: boolean }
+        created_at: { type: string, format: date-time }
+paths:
+  /auth/otp/request:
+    post:
+      summary: Request an OTP to be sent by email
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+                purpose: { type: string, enum: [registration, login, reset_password], default: registration }
+      responses:
+        '201':
+          description: OTP created
+  /auth/otp/verify:
+    post:
+      summary: Verify OTP and obtain JWT
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code]
+              properties:
+                email: { type: string, format: email }
+                code: { type: string }
+                purpose: { type: string, enum: [registration, login, reset_password], default: registration }
+                name: { type: string }
+                role: { type: string, enum: [buyer, vendor] }
+      responses:
+        '200':
+          description: JWT issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  user: { $ref: '#/components/schemas/User' }
+  /dashboard:
+    get:
+      summary: Role-based dashboard content
+      security: [{ bearerAuth: [] }]
+      tags: [Dashboard]
+      responses:
+        '200': { description: Dashboard payload }
+  /users:
+    get:
+      summary: List users by role/category
+      security: [{ bearerAuth: [] }]
+      tags: [Users]
+      parameters:
+        - in: query
+          name: role
+          schema: { type: string, enum: [buyer, vendor] }
+        - in: query
+          name: category
+          schema: { type: integer }
+        - in: query
+          name: subcategory
+          schema: { type: integer }
+        - in: query
+          name: q
+          schema: { type: string }
+      responses:
+        '200':
+          description: Users list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PublicUser' }
+  /users/{id}:
+    get:
+      summary: Get a public user profile
+      security: [{ bearerAuth: [] }]
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Public profile
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicUser' }
+  /me:
+    patch:
+      summary: Update current user's profile
+      security: [{ bearerAuth: [] }]
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/User' }
+      responses:
+        '200': { description: Updated profile }
+  /categories:
+    get:
+      summary: List categories and subcategories
+      security: [{ bearerAuth: [] }]
+      tags: [Categories]
+      responses:
+        '200':
+          description: Category tree
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Category' }
+  /rfq:
+    get:
+      summary: Browse and filter RFQs
+      security: [{ bearerAuth: [] }]
+      tags: [RFQ]
+      parameters:
+        - in: query
+          name: category_id
+          schema: { type: integer }
+        - in: query
+          name: subcategory_id
+          schema: { type: integer }
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: tags
+          schema: { type: array, items: { type: string } }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: List RFQs
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/RFQ' }
+    post:
+      summary: Create a new RFQ (buyer only)
+      security: [{ bearerAuth: [] }]
+      tags: [RFQ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewRFQ' }
+      responses:
+        '201': { description: RFQ created }
+  /rfq/{id}:
+    get:
+      summary: Get RFQ by ID
+      security: [{ bearerAuth: [] }]
+      tags: [RFQ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: RFQ }
+  /rfq/{id}/related:
+    get:
+      summary: Related RFQs
+      security: [{ bearerAuth: [] }]
+      tags: [RFQ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: List of related RFQs }
+  /rfq/{rfqId}/bids:
+    get:
+      summary: List bids for RFQ
+      security: [{ bearerAuth: [] }]
+      tags: [Bids]
+      parameters:
+        - in: path
+          name: rfqId
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Bids
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Bid' }
+    post:
+      summary: Create bid on RFQ (vendor only)
+      security: [{ bearerAuth: [] }]
+      tags: [Bids]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewBid' }
+      responses:
+        '201': { description: Bid created }
+  /bids/{id}:
+    put:
+      summary: Update a bid (owner vendor only)
+      security: [{ bearerAuth: [] }]
+      tags: [Bids]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewBid' }
+      responses:
+        '200': { description: Bid updated }
+  /bids/{id}/award:
+    post:
+      summary: Award a bid (RFQ buyer only)
+      security: [{ bearerAuth: [] }]
+      tags: [Bids]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Bid awarded }
+  /bids/{id}/retract:
+    post:
+      summary: Retract a bid (owner vendor only)
+      security: [{ bearerAuth: [] }]
+      tags: [Bids]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Bid retracted }
+  /favorites/rfqs/{rfqId}:
+    post:
+      summary: Favorite an RFQ
+      security: [{ bearerAuth: [] }]
+      tags: [Favorites]
+      parameters:
+        - in: path
+          name: rfqId
+          required: true
+          schema: { type: integer }
+      responses:
+        '201': { description: Favorited }
+    delete:
+      summary: Unfavorite an RFQ
+      security: [{ bearerAuth: [] }]
+      tags: [Favorites]
+      parameters:
+        - in: path
+          name: rfqId
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { description: Unfavorited }
+  /favorites/users/{userId}:
+    post:
+      summary: Favorite a user
+      security: [{ bearerAuth: [] }]
+      tags: [Favorites]
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema: { type: string }
+      responses:
+        '201': { description: Favorited }
+    delete:
+      summary: Unfavorite a user
+      security: [{ bearerAuth: [] }]
+      tags: [Favorites]
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Unfavorited }
+  /referrals/invite:
+    post:
+      summary: Invite a user by email
+      security: [{ bearerAuth: [] }]
+      tags: [Referrals]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invitee_email]
+              properties:
+                invitee_email: { type: string, format: email }
+      responses:
+        '201': { description: Invite created }
+  /disputes:
+    post:
+      summary: Open a dispute
+      security: [{ bearerAuth: [] }]
+      tags: [Disputes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rfq_id: { type: integer }
+                bid_id: { type: integer }
+                reason: { type: string }
+      responses:
+        '201': { description: Dispute created }
+    get:
+      summary: List disputes (admin)
+      security: [{ bearerAuth: [] }]
+      tags: [Disputes]
+      responses:
+        '200': { description: Disputes list }
+  /disputes/{id}:
+    get:
+      summary: Get a dispute
+      security: [{ bearerAuth: [] }]
+      tags: [Disputes]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Dispute }
+  /disputes/{id}/resolve:
+    post:
+      summary: Resolve dispute (admin)
+      security: [{ bearerAuth: [] }]
+      tags: [Disputes]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { type: string, enum: [resolved, rejected] }
+                resolution: { type: string }
+      responses:
+        '200': { description: Dispute resolved }
+  /conversations:
+    post:
+      summary: Create or fetch a conversation between buyer and vendor for an RFQ
+      security: [{ bearerAuth: [] }]
+      tags: [Chat]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rfq_id, vendor_id]
+              properties:
+                rfq_id: { type: integer }
+                vendor_id: { type: string, format: uuid }
+      responses:
+        '201': { description: Conversation created }
+    get:
+      summary: List conversations for current user
+      security: [{ bearerAuth: [] }]
+      tags: [Chat]
+      responses:
+        '200': { description: Conversations }
+  /messages:
+    post:
+      summary: Send a message in a conversation
+      security: [{ bearerAuth: [] }]
+      tags: [Chat]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [conversation_id, content]
+              properties:
+                conversation_id: { type: integer }
+                content: { type: string }
+      responses:
+        '201': { description: Message sent }
+  /notifications:
+    get:
+      summary: List notifications for current user
+      security: [{ bearerAuth: [] }]
+      tags: [Notifications]
+      responses:
+        '200': { description: Notifications list }
+    post:
+      summary: Mark notifications as read
+      security: [{ bearerAuth: [] }]
+      tags: [Notifications]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids: { type: array, items: { type: integer } }
+      responses:
+        '200': { description: Marked read }

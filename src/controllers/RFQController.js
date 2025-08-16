@@ -1,6 +1,13 @@
 // src/controllers/RFQController.js
 const RFQService = require('../services/RFQService');
 
+const sanitizeForLog = (input) => {
+    if (typeof input === 'string') {
+        return input.replace(/[\r\n\t]/g, ' ').substring(0, 200);
+    }
+    return String(input).substring(0, 200);
+};
+
 const handleErrors = (err, res) => {
     if (err.message.includes('Invalid ID')) {
         return res.status(400).json({ success: false, message: err.message });
@@ -14,7 +21,7 @@ const handleErrors = (err, res) => {
     if (err.message.includes('required') || err.message.includes('must be')) {
         return res.status(400).json({ success: false, message: err.message });
     }
-    console.error('Unexpected error:', err);
+    console.error('Unexpected error:', sanitizeForLog(err.message));
     res.status(500).json({ success: false, message: "An internal server error occurred." });
 };
 
@@ -33,7 +40,12 @@ class RFQController {
      */
     async browseRFQs(req, res) {
         try {
-            const rfqs = await RFQService.find(req.query);
+            const validatedQuery = {
+                limit: req.query.limit ? Math.min(Math.max(parseInt(req.query.limit), 1), 100) : 20,
+                offset: req.query.offset ? Math.max(parseInt(req.query.offset), 0) : 0,
+                category_id: req.query.category_id && !isNaN(req.query.category_id) ? parseInt(req.query.category_id) : undefined
+            };
+            const rfqs = await RFQService.find(validatedQuery);
             res.status(200).json({ success: true, message: "RFQs fetched successfully", data: rfqs });
         } catch (error) {
             handleErrors(error, res);
@@ -69,6 +81,10 @@ class RFQController {
      */
     async createRFQ(req, res) {
         try {
+            if (!req.body.title || !req.body.description) {
+                return res.status(400).json({ success: false, message: "Title and description are required" });
+            }
+            
             const rfqData = {
                 ...req.body,
                 buyer_id: req.user.id,
@@ -92,10 +108,14 @@ class RFQController {
     async updateRFQ(req, res) {
         try {
             const { id } = req.params;
+            if (!id || isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid RFQ ID" });
+            }
+            
             const updateData = {
                 ...req.body,
-                title: sanitizeInput(req.body.title),
-                description: sanitizeInput(req.body.description)
+                title: req.body.title ? sanitizeInput(req.body.title) : undefined,
+                description: req.body.description ? sanitizeInput(req.body.description) : undefined
             };
             const userId = req.user.id;
             const updatedRFQ = await RFQService.update(id, updateData, userId);
@@ -105,6 +125,12 @@ class RFQController {
         }
     }
 
+    /**
+     * @description Close an RFQ
+     * @route POST /api/rfq/:id/close
+     * @access Private (Buyer owner only)
+     * @middleware auth, roleGuard('buyer'), isRFQOwner
+     */
     async closeRFQ(req, res) {
         try {
             const { id } = req.params;

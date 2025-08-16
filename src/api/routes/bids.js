@@ -5,7 +5,14 @@ const router = express.Router();
 const BidController = require('../../controllers/BidController');
 
 // CSRF protection for state-changing operations
-const csrfProtection = csrf({ cookie: true });
+const csrfProtection = csrf({ 
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/'
+  }
+});
 
 // Error handling middleware
 const asyncHandler = (fn) => (req, res, next) => {
