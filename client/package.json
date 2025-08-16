@@ -61,7 +61,25 @@
   "engines": {
     "node": ">=0.10.0"
   },
+    "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "lint": "eslint src/**/*.js",
+    "format": "prettier --write src/**/*.js"
+  },
   "dependencies": {
     "grunt-angular-translate": "^0.3.0"
+    "bcryptjs": "^2.4.3",
   }
+
+      "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "nodemon": "^2.0.4"
+  }
+  },
+  "lint-staged": {
+    "*.js": ["eslint --fix", "prettier --write"]
+  }
+}
 }

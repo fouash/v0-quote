@@ -50,8 +50,20 @@ app.get('/', (req, res) => {
 
 // --- Error Handling ---
 app.use((err, req, res, next) => {
-  const sanitizedError = err.stack ? err.stack.replace(/[\r\n\t]/g, ' ').substring(0, 500) : 'Unknown error';
-  logger.error('Server error:', sanitizedError);
+  // Log with structured context
+  logger.error({
+    message: 'Unhandled server error',
+    error: {
+      message: err.message,
+      stack: err.stack,
+    },
+    request: {
+      method: req.method,
+      url: req.originalUrl,
+      ip: req.ip,
+    },
+    user: req.user ? { id: req.user.id, role: req.user.role } : 'anonymous',
+  });
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
