@@ -142,6 +142,15 @@ class KeywordController {
                 });
             }
 
+            // Enforce ownership: only the RFQ owner (buyer) can modify keywords
+            const rfq = await RFQServiceExtended.findById(id);
+            if (!rfq) {
+                return res.status(404).json({ success: false, message: "RFQ not found" });
+            }
+            if (!req.user || rfq.buyer_id !== req.user.id) {
+                return res.status(403).json({ success: false, message: "Forbidden: not RFQ owner" });
+            }
+
             const result = await RFQServiceExtended.addKeywords(id, keywords);
             res.status(200).json({ 
                 success: true, 
@@ -167,6 +176,15 @@ class KeywordController {
                     success: false, 
                     message: "Keywords array is required" 
                 });
+            }
+
+            // Enforce ownership: only the RFQ owner (buyer) can modify keywords
+            const rfq = await RFQServiceExtended.findById(id);
+            if (!rfq) {
+                return res.status(404).json({ success: false, message: "RFQ not found" });
+            }
+            if (!req.user || rfq.buyer_id !== req.user.id) {
+                return res.status(403).json({ success: false, message: "Forbidden: not RFQ owner" });
             }
 
             const result = await RFQServiceExtended.removeKeywords(id, keywords);

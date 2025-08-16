@@ -4,7 +4,7 @@ const csrf = require('csurf');
 const router = express.Router();
 const RFQController = require('../../controllers/RFQController');
 const BidController = require('../../controllers/BidController');
-const { requireRole } = require('../../middleware/auth');
+const { authenticateToken, requireRole } = require('../../middleware/auth');
 
 // CSRF protection for state-changing operations
 const csrfProtection = csrf({ 
@@ -31,13 +31,13 @@ router.get('/', asyncHandler(RFQController.browseRFQs));
 router.get('/:id', asyncHandler(RFQController.getRFQById));
 
 // POST /api/rfq - Create a new RFQ (CSRF protected, buyer only)
-router.post('/', csrfProtection, requireRole('buyer'), asyncHandler(RFQController.createRFQ));
+router.post('/', authenticateToken, csrfProtection, requireRole('buyer'), asyncHandler(RFQController.createRFQ));
 
 // PUT /api/rfq/:id - Update an RFQ (CSRF protected, buyer only)
-router.put('/:id', csrfProtection, requireRole('buyer'), asyncHandler(RFQController.updateRFQ));
+router.put('/:id', authenticateToken, csrfProtection, requireRole('buyer'), asyncHandler(RFQController.updateRFQ));
 
 // POST /api/rfq/:id/close - Close an RFQ (CSRF protected, buyer only)
-router.post('/:id/close', csrfProtection, requireRole('buyer'), asyncHandler(RFQController.closeRFQ));
+router.post('/:id/close', authenticateToken, csrfProtection, requireRole('buyer'), asyncHandler(RFQController.closeRFQ));
 
 // GET /api/rfq/:id/related - Get related RFQs
 router.get('/:id/related', asyncHandler(RFQController.getRelatedRFQs));
@@ -45,7 +45,7 @@ router.get('/:id/related', asyncHandler(RFQController.getRelatedRFQs));
 // --- Nested Bid Routes ---
 
 // POST /api/rfq/:rfqId/bids - Create a new bid for an RFQ (CSRF protected, vendor only)
-router.post('/:rfqId/bids', csrfProtection, requireRole('vendor'), asyncHandler(BidController.createBid));
+router.post('/:rfqId/bids', authenticateToken, csrfProtection, requireRole('vendor'), asyncHandler(BidController.createBid));
 
 // GET /api/rfq/:rfqId/bids - List bids for an RFQ
 router.get('/:rfqId/bids', asyncHandler(BidController.listBidsForRFQ));

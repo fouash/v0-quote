@@ -3,6 +3,7 @@ const express = require('express');
 const csrf = require('csurf');
 const router = express.Router();
 const KeywordController = require('../../controllers/KeywordController');
+const { authenticateToken, requireRole } = require('../../middleware/auth');
 
 // CSRF protection for state-changing operations
 const csrfProtection = csrf({ 
@@ -41,10 +42,10 @@ router.get('/by-keywords', asyncHandler(KeywordController.findByKeywords));
 // GET /api/rfq/:id/keywords - Get keywords for an RFQ
 router.get('/:id/keywords', asyncHandler(KeywordController.getKeywords));
 
-// POST /api/rfq/:id/keywords - Add keywords to an RFQ (CSRF protected)
-router.post('/:id/keywords', csrfProtection, asyncHandler(KeywordController.addKeywords));
+// POST /api/rfq/:id/keywords - Add keywords to an RFQ (Auth + CSRF protected, buyer only)
+router.post('/:id/keywords', authenticateToken, requireRole('buyer'), csrfProtection, asyncHandler(KeywordController.addKeywords));
 
-// DELETE /api/rfq/:id/keywords - Remove keywords from an RFQ (CSRF protected)
-router.delete('/:id/keywords', csrfProtection, asyncHandler(KeywordController.removeKeywords));
+// DELETE /api/rfq/:id/keywords - Remove keywords from an RFQ (Auth + CSRF protected, buyer only)
+router.delete('/:id/keywords', authenticateToken, requireRole('buyer'), csrfProtection, asyncHandler(KeywordController.removeKeywords));
 
 module.exports = router;

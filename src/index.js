@@ -4,6 +4,7 @@ const express = require('express');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
+const logger = require('./utils/logger');
 
 // Import routes
 const rfqRoutes = require('./api/routes/rfqs');
@@ -33,7 +34,7 @@ app.use(cors(corsConfig));
 const { authenticateToken, requireRole, optionalAuth } = require('./middleware/auth');
 
 if (!process.env.JWT_SECRET) {
-  console.error('JWT_SECRET environment variable is required');
+  logger.error('JWT_SECRET environment variable is required');
   process.exit(1);
 }
 
@@ -50,7 +51,7 @@ app.get('/', (req, res) => {
 // --- Error Handling ---
 app.use((err, req, res, next) => {
   const sanitizedError = err.stack ? err.stack.replace(/[\r\n\t]/g, ' ').substring(0, 500) : 'Unknown error';
-  console.error('Server error:', sanitizedError);
+  logger.error('Server error:', sanitizedError);
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
@@ -71,13 +72,13 @@ try {
       socket.join(`user:${userId}`);
     }
   });
-  console.log('WebSocket initialized');
+  logger.info('WebSocket initialized');
 } catch (e) {
-  console.warn('Socket.IO not installed; skipping WebSocket setup');
+  logger.warn('Socket.IO not installed; skipping WebSocket setup');
 }
 
 server.listen(PORT, () => {
-  console.log(`Server is listening on port ${PORT}`);
+  logger.info(`Server is listening on port ${PORT}`);
   // In a real app, you would also connect to the database here.
   // e.g., connectToDatabase();
 });

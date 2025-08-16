@@ -4,6 +4,8 @@ const csrf = require('csurf');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const db = require('../../config/db');
+const rateLimit = require('express-rate-limit');
+const logger = require('../../utils/logger');
 
 // CSRF protection for auth routes
 const csrfProtection = csrf({ 
@@ -14,6 +16,15 @@ const csrfProtection = csrf({
     path: '/',
     domain: process.env.COOKIE_DOMAIN || undefined
   }
+});
+
+// Stricter per-route rate limiting for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: parseInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX) || 10,
+  message: { error: 'Too many auth requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // Helpers - Fixed ReDoS vulnerability with more efficient regex
@@ -33,7 +44,7 @@ const slugify = (str) => (str || '')
 
 // POST /api/auth/otp/request
 // body: { email, purpose = 'registration' }
-router.post('/otp/request', csrfProtection, async (req, res) => {
+router.post('/otp/request', authLimiter, csrfProtection, async (req, res) => {
   try {
     const { email, purpose = 'registration' } = req.body || {};
     if (!email || !isValidEmail(email)) {
@@ -53,18 +64,18 @@ router.post('/otp/request', csrfProtection, async (req, res) => {
 
     // TODO: Integrate nodemailer to send code by email
     // Log without sensitive data to prevent log injection
-    console.log(`[OTP] Code sent for purpose: ${purpose} to email ending with: ...${email.slice(-10)} (expires at ${expiresAt.toISOString()})`);
+    logger.info(`[OTP] Code sent for purpose: ${purpose} to email ending with: ...${email.slice(-10)} (expires at ${expiresAt.toISOString()})`);
 
     return res.status(201).json({ success: true, message: 'OTP sent to email' });
   } catch (err) {
-    console.error('OTP request error:', err);
+    logger.error('OTP request error:', err);
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
 // POST /api/auth/otp/verify
 // body: { email, code, purpose, name?, role? }
-router.post('/otp/verify', csrfProtection, async (req, res) => {
+router.post('/otp/verify', authLimiter, csrfProtection, async (req, res) => {
   const client = await db._pool?.connect?.() || null;
   try {
     const { email, code, purpose = 'registration', name, role } = req.body || {};
@@ -138,7 +149,7 @@ router.post('/otp/verify', csrfProtection, async (req, res) => {
     if (client) {
       try { await client.query('ROLLBACK'); } catch (e) {}
     }
-    console.error('OTP verify error:', err);
+    logger.error('OTP verify error:', err);
     return res.status(500).json({ success: false, message: 'Internal server error' });
   } finally {
     if (client) client.release();

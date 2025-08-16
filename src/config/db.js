@@ -1,5 +1,6 @@
 // src/config/db.js
 const { Pool } = require('pg');
+const logger = require('../utils/logger');
 
 const pool = new Pool({
     user: process.env.DB_USER || 'postgres',
@@ -10,11 +11,11 @@ const pool = new Pool({
 });
 
 pool.on('error', (err) => {
-    console.error('Database pool error:', err.message);
+    logger.error('Database pool error:', err.message);
 });
 
 pool.on('connect', () => {
-    console.log('Database connected successfully');
+    logger.info('Database connected successfully');
 });
 
 module.exports = {
