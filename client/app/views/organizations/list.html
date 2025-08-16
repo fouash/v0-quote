@@ -1,0 +1,186 @@
+<!-- Organization List View -->
+<div class="row" ng-controller="OrganizationController">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-building"></i> Organizations
+                    <div class="pull-right">
+                        <a href="#/organizations/create" class="btn btn-primary btn-sm">
+                            <i class="fa fa-plus"></i> Add Organization
+                        </a>
+                    </div>
+                </h3>
+            </div>
+            
+            <!-- Filters -->
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Search</label>
+                            <input type="text" class="form-control" ng-model="filters.search" 
+                                   ng-change="filterChanged()" placeholder="Search organizations...">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Type</label>
+                            <select class="form-control" ng-model="filters.type" ng-change="filterChanged()">
+                                <option value="">All Types</option>
+                                <option value="Buyer">Buyer</option>
+                                <option value="Supplier">Supplier</option>
+                                <option value="Both">Both</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select class="form-control" ng-model="filters.active" ng-change="filterChanged()">
+                                <option value="">All Status</option>
+                                <option value="1">Active</option>
+                                <option value="0">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Verification</label>
+                            <select class="form-control" ng-model="filters.verified" ng-change="filterChanged()">
+                                <option value="">All</option>
+                                <option value="1">Verified</option>
+                                <option value="0">Pending</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <div>
+                                <button class="btn btn-default" ng-click="filterChanged()">
+                                    <i class="fa fa-search"></i> Search
+                                </button>
+                                <button class="btn btn-default" ng-click="filters = {}; filterChanged()">
+                                    <i class="fa fa-refresh"></i> Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organizations Table -->
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Organization Name</th>
+                            <th>Type</th>
+                            <th>Location</th>
+                            <th>VAT Number</th>
+                            <th>CR Number</th>
+                            <th>Status</th>
+                            <th>Verification</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-if="isLoading">
+                            <td colspan="9" class="text-center">
+                                <i class="fa fa-spinner fa-spin"></i> Loading organizations...
+                            </td>
+                        </tr>
+                        <tr ng-if="!isLoading && organizations.length === 0">
+                            <td colspan="9" class="text-center text-muted">
+                                No organizations found
+                            </td>
+                        </tr>
+                        <tr ng-repeat="org in organizations" ng-if="!isLoading">
+                            <td>
+                                <a href="#/organizations/{{org.id}}">
+                                    <strong>{{org.organization_name}}</strong>
+                                </a>
+                                <br>
+                                <small class="text-muted">{{org.contact_email}}</small>
+                            </td>
+                            <td>
+                                <span class="label" ng-class="{
+                                    'label-info': org.organization_type === 'Buyer',
+                                    'label-success': org.organization_type === 'Supplier',
+                                    'label-primary': org.organization_type === 'Both'
+                                }">
+                                    {{org.organization_type}}
+                                </span>
+                            </td>
+                            <td>
+                                {{org.city}}, {{org.state_province}}
+                                <br>
+                                <small class="text-muted">{{org.country}}</small>
+                            </td>
+                            <td>
+                                <code ng-if="org.vat_number">{{org.vat_number}}</code>
+                                <span ng-if="!org.vat_number" class="text-muted">-</span>
+                            </td>
+                            <td>
+                                <code ng-if="org.cr_number">{{org.cr_number}}</code>
+                                <span ng-if="!org.cr_number" class="text-muted">-</span>
+                            </td>
+                            <td>
+                                <span class="label" ng-class="org.is_active ? 'label-success' : 'label-danger'">
+                                    {{org.is_active ? 'Active' : 'Inactive'}}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="label" ng-class="getVerificationStatusClass(org.is_verified)">
+                                    {{getVerificationStatusText(org.is_verified)}}
+                                </span>
+                            </td>
+                            <td>
+                                {{org.created_at | date:'MMM dd, yyyy'}}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-xs">
+                                    <a href="#/organizations/{{org.id}}" class="btn btn-default" title="View">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                    <a href="#/organizations/{{org.id}}/edit" class="btn btn-default" title="Edit">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                    <button class="btn btn-danger" ng-click="deleteOrganization(org.id)" title="Delete">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="panel-footer" ng-if="pagination.totalItems > pagination.itemsPerPage">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="text-muted">
+                            Showing {{((pagination.currentPage - 1) * pagination.itemsPerPage) + 1}} to 
+                            {{Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)}} 
+                            of {{pagination.totalItems}} organizations
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <uib-pagination 
+                            total-items="pagination.totalItems"
+                            ng-model="pagination.currentPage"
+                            items-per-page="pagination.itemsPerPage"
+                            ng-change="pageChanged()"
+                            class="pagination-sm pull-right"
+                            boundary-links="true"
+                            rotate="false">
+                        </uib-pagination>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

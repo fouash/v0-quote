@@ -1,0 +1,367 @@
+<!-- Organization Create/Edit Form -->
+<div class="row" ng-controller="OrganizationController">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-building"></i> 
+                    {{organization.id ? 'Edit Organization' : 'Create Organization'}}
+                    <div class="pull-right">
+                        <a href="#/organizations" class="btn btn-default btn-sm">
+                            <i class="fa fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </h3>
+            </div>
+
+            <form name="organizationForm" ng-submit="organization.id ? updateOrganization() : createOrganization()" novalidate>
+                <div class="panel-body">
+                    
+                    <!-- Basic Information -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h4><i class="fa fa-info-circle"></i> Basic Information</h4>
+                            <hr>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group" ng-class="{'has-error': organizationForm.organization_name.$invalid && organizationForm.organization_name.$touched}">
+                                <label for="organization_name">Organization Name <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       id="organization_name"
+                                       name="organization_name"
+                                       class="form-control" 
+                                       ng-model="organization.organization_name"
+                                       required
+                                       maxlength="255"
+                                       placeholder="Enter organization name">
+                                <div ng-show="organizationForm.organization_name.$invalid && organizationForm.organization_name.$touched" class="help-block">
+                                    <span ng-show="organizationForm.organization_name.$error.required">Organization name is required</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group" ng-class="{'has-error': organizationForm.organization_type.$invalid && organizationForm.organization_type.$touched}">
+                                <label for="organization_type">Organization Type <span class="text-danger">*</span></label>
+                                <select id="organization_type"
+                                        name="organization_type"
+                                        class="form-control" 
+                                        ng-model="organization.organization_type"
+                                        required>
+                                    <option value="">Select Type</option>
+                                    <option ng-repeat="type in organizationTypes" value="{{type}}">{{type}}</option>
+                                </select>
+                                <div ng-show="organizationForm.organization_type.$invalid && organizationForm.organization_type.$touched" class="help-block">
+                                    <span ng-show="organizationForm.organization_type.$error.required">Organization type is required</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h4><i class="fa fa-phone"></i> Contact Information</h4>
+                            <hr>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group" ng-class="{'has-error': organizationForm.contact_email.$invalid && organizationForm.contact_email.$touched}">
+                                <label for="contact_email">Contact Email <span class="text-danger">*</span></label>
+                                <input type="email" 
+                                       id="contact_email"
+                                       name="contact_email"
+                                       class="form-control" 
+                                       ng-model="organization.contact_email"
+                                       required
+                                       maxlength="255"
+                                       placeholder="contact@organization.com">
+                                <div ng-show="organizationForm.contact_email.$invalid && organizationForm.contact_email.$touched" class="help-block">
+                                    <span ng-show="organizationForm.contact_email.$error.required">Contact email is required</span>
+                                    <span ng-show="organizationForm.contact_email.$error.email">Please enter a valid email address</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group" ng-class="{'has-error': organizationForm.contact_phone.$invalid && organizationForm.contact_phone.$touched}">
+                                <label for="contact_phone">Contact Phone <span class="text-danger">*</span></label>
+                                <input type="tel" 
+                                       id="contact_phone"
+                                       name="contact_phone"
+                                       class="form-control" 
+                                       ng-model="organization.contact_phone"
+                                       required
+                                       maxlength="20"
+                                       placeholder="+966501234567">
+                                <div ng-show="organizationForm.contact_phone.$invalid && organizationForm.contact_phone.$touched" class="help-block">
+                                    <span ng-show="organizationForm.contact_phone.$error.required">Contact phone is required</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Address Information -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h4><i class="fa fa-map-marker"></i> Address Information</h4>
+                            <hr>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group" ng-class="{'has-error': organizationForm.address_line1.$invalid && organizationForm.address_line1.$touched}">
+                                <label for="address_line1">Address <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       id="address_line1"
+                                       name="address_line1"
+                                       class="form-control" 
+                                       ng-model="organization.address_line1"
+                                       required
+                                       maxlength="255"
+                                       placeholder="Enter full address">
+                                <div ng-show="organizationForm.address_line1.$invalid && organizationForm.address_line1.$touched" class="help-block">
+                                    <span ng-show="organizationForm.address_line1.$error.required">Address is required</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group" ng-class="{'has-error': organizationForm.city.$invalid && organizationForm.city.$touched}">
+                                <label for="city">City <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       id="city"
+                                       name="city"
+                                       class="form-control" 
+                                       ng-model="organization.city"
+                                       required
+                                       maxlength="100"
+                                       placeholder="Riyadh">
+                                <div ng-show="organizationForm.city.$invalid && organizationForm.city.$touched" class="help-block">
+                                    <span ng-show="organizationForm.city.$error.required">City is required</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group" ng-class="{'has-error': organizationForm.state_province.$invalid && organizationForm.state_province.$touched}">
+                                <label for="state_province">State/Province <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       id="state_province"
+                                       name="state_province"
+                                       class="form-control" 
+                                       ng-model="organization.state_province"
+                                       required
+                                       maxlength="100"
+                                       placeholder="Riyadh Province">
+                                <div ng-show="organizationForm.state_province.$invalid && organizationForm.state_province.$touched" class="help-block">
+                                    <span ng-show="organizationForm.state_province.$error.required">State/Province is required</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group" ng-class="{'has-error': organizationForm.country.$invalid && organizationForm.country.$touched}">
+                                <label for="country">Country <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       id="country"
+                                       name="country"
+                                       class="form-control" 
+                                       ng-model="organization.country"
+                                       required
+                                       maxlength="50"
+                                       placeholder="Saudi Arabia">
+                                <div ng-show="organizationForm.country.$invalid && organizationForm.country.$touched" class="help-block">
+                                    <span ng-show="organizationForm.country.$error.required">Country is required</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group" ng-class="{'has-error': organizationForm.national_address.$invalid && organizationForm.national_address.$touched}">
+                                <label for="national_address">National Address <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       id="national_address"
+                                       name="national_address"
+                                       class="form-control" 
+                                       ng-model="organization.national_address"
+                                       required
+                                       pattern="[0-9]{8}"
+                                       maxlength="8"
+                                       placeholder="12345678">
+                                <div ng-show="organizationForm.national_address.$invalid && organizationForm.national_address.$touched" class="help-block">
+                                    <span ng-show="organizationForm.national_address.$error.required">National address is required</span>
+                                    <span ng-show="organizationForm.national_address.$error.pattern">National address must be 8 digits</span>
+                                </div>
+                                <small class="help-block">8-digit national address number</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Saudi Arabian Business Numbers -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h4><i class="fa fa-certificate"></i> Saudi Arabian Business Registration</h4>
+                            <hr>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group" ng-class="{'has-error': organizationForm.vat_number.$invalid && organizationForm.vat_number.$touched}">
+                                <label for="vat_number">VAT Number <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       id="vat_number"
+                                       name="vat_number"
+                                       class="form-control" 
+                                       ng-model="organization.vat_number"
+                                       required
+                                       pattern="3[0-9]{14}"
+                                       maxlength="15"
+                                       placeholder="315123456789012">
+                                <div ng-show="organizationForm.vat_number.$invalid && organizationForm.vat_number.$touched" class="help-block">
+                                    <span ng-show="organizationForm.vat_number.$error.required">VAT number is required</span>
+                                    <span ng-show="organizationForm.vat_number.$error.pattern">VAT number must be 15 digits starting with 3</span>
+                                </div>
+                                <small class="help-block">15-digit VAT number starting with 3</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group" ng-class="{'has-error': organizationForm.cr_number.$invalid && organizationForm.cr_number.$touched}">
+                                <label for="cr_number">Commercial Registration (CR) Number <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       id="cr_number"
+                                       name="cr_number"
+                                       class="form-control" 
+                                       ng-model="organization.cr_number"
+                                       required
+                                       pattern="[0-9]{10}"
+                                       maxlength="10"
+                                       placeholder="1234567890">
+                                <div ng-show="organizationForm.cr_number.$invalid && organizationForm.cr_number.$touched" class="help-block">
+                                    <span ng-show="organizationForm.cr_number.$error.required">CR number is required</span>
+                                    <span ng-show="organizationForm.cr_number.$error.pattern">CR number must be 10 digits</span>
+                                </div>
+                                <small class="help-block">10-digit commercial registration number</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Optional Business Numbers -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="avl_number">AVL Number</label>
+                                <input type="text" 
+                                       id="avl_number"
+                                       name="avl_number"
+                                       class="form-control" 
+                                       ng-model="organization.avl_number"
+                                       maxlength="20"
+                                       placeholder="Optional AVL number">
+                                <small class="help-block">Authorized Value List number (optional)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="nwc_number">NWC Number</label>
+                                <input type="text" 
+                                       id="nwc_number"
+                                       name="nwc_number"
+                                       class="form-control" 
+                                       ng-model="organization.nwc_number"
+                                       maxlength="20"
+                                       placeholder="Optional NWC number">
+                                <small class="help-block">National Water Company number (optional)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="se_number">SE Number</label>
+                                <input type="text" 
+                                       id="se_number"
+                                       name="se_number"
+                                       class="form-control" 
+                                       ng-model="organization.se_number"
+                                       maxlength="20"
+                                       placeholder="Optional SE number">
+                                <small class="help-block">Saudi Electricity number (optional)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="modon_number">MODON Number</label>
+                                <input type="text" 
+                                       id="modon_number"
+                                       name="modon_number"
+                                       class="form-control" 
+                                       ng-model="organization.modon_number"
+                                       maxlength="20"
+                                       placeholder="Optional MODON number">
+                                <small class="help-block">Saudi Industrial Property Authority number (optional)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h4><i class="fa fa-cog"></i> Status</h4>
+                            <hr>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" ng-model="organization.is_active">
+                                        Active Organization
+                                    </label>
+                                </div>
+                                <small class="help-block">Check to make this organization active</small>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Form Actions -->
+                <div class="panel-footer">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <button type="submit" 
+                                    class="btn btn-primary" 
+                                    ng-disabled="organizationForm.$invalid || isLoading">
+                                <i class="fa fa-save"></i>
+                                <span ng-if="!isLoading">{{organization.id ? 'Update Organization' : 'Create Organization'}}</span>
+                                <span ng-if="isLoading">
+                                    <i class="fa fa-spinner fa-spin"></i> Processing...
+                                </span>
+                            </button>
+                            <a href="#/organizations" class="btn btn-default">
+                                <i class="fa fa-times"></i> Cancel
+                            </a>
+                            <button type="button" 
+                                    class="btn btn-info pull-right" 
+                                    ng-if="organization.id"
+                                    ng-click="loadOrganization(organization.id)">
+                                <i class="fa fa-refresh"></i> Reload
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,519 @@
+<!-- Organization Detail View -->
+<div class="row" ng-controller="OrganizationController">
+    <div class="col-md-12">
+        
+        <!-- Organization Header -->
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-building"></i> {{organization.organization_name}}
+                    <div class="pull-right">
+                        <a href="#/organizations" class="btn btn-default btn-sm">
+                            <i class="fa fa-arrow-left"></i> Back to List
+                        </a>
+                        <a href="#/organizations/{{organization.id}}/edit" class="btn btn-primary btn-sm">
+                            <i class="fa fa-edit"></i> Edit
+                        </a>
+                    </div>
+                </h3>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h4>{{organization.organization_name}}</h4>
+                        <p class="text-muted">{{organization.organization_type}} Organization</p>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Contact Information:</strong><br>
+                                <i class="fa fa-envelope"></i> {{organization.contact_email}}<br>
+                                <i class="fa fa-phone"></i> {{organization.contact_phone}}<br>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Address:</strong><br>
+                                {{organization.address_line1}}<br>
+                                {{organization.city}}, {{organization.state_province}}<br>
+                                {{organization.country}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-right">
+                            <span class="label label-lg" ng-class="organization.is_active ? 'label-success' : 'label-danger'">
+                                {{organization.is_active ? 'Active' : 'Inactive'}}
+                            </span>
+                            <br><br>
+                            <span class="label label-lg" ng-class="getVerificationStatusClass(organization.is_verified)">
+                                {{getVerificationStatusText(organization.is_verified)}}
+                            </span>
+                            <br><br>
+                            <small class="text-muted">
+                                Created: {{organization.created_at | date:'MMM dd, yyyy'}}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <uib-tabset active="activeTab">
+                    
+                    <!-- Business Information Tab -->
+                    <uib-tab index="0" heading="Business Information">
+                        <div class="row" style="margin-top: 20px;">
+                            <div class="col-md-6">
+                                <h5><i class="fa fa-certificate"></i> Saudi Business Registration</h5>
+                                <table class="table table-bordered">
+                                    <tr>
+                                        <td><strong>VAT Number:</strong></td>
+                                        <td>
+                                            <code>{{organization.vat_number}}</code>
+                                            <span ng-if="isValidVATNumber(organization.vat_number)" class="text-success">
+                                                <i class="fa fa-check"></i>
+                                            </span>
+                                            <span ng-if="!isValidVATNumber(organization.vat_number)" class="text-danger">
+                                                <i class="fa fa-times"></i>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>CR Number:</strong></td>
+                                        <td>
+                                            <code>{{organization.cr_number}}</code>
+                                            <span ng-if="isValidCRNumber(organization.cr_number)" class="text-success">
+                                                <i class="fa fa-check"></i>
+                                            </span>
+                                            <span ng-if="!isValidCRNumber(organization.cr_number)" class="text-danger">
+                                                <i class="fa fa-times"></i>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>National Address:</strong></td>
+                                        <td>
+                                            <code>{{organization.national_address}}</code>
+                                            <span ng-if="isValidNationalAddress(organization.national_address)" class="text-success">
+                                                <i class="fa fa-check"></i>
+                                            </span>
+                                            <span ng-if="!isValidNationalAddress(organization.national_address)" class="text-danger">
+                                                <i class="fa fa-times"></i>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h5><i class="fa fa-file-o"></i> Additional Numbers</h5>
+                                <table class="table table-bordered">
+                                    <tr ng-if="organization.avl_number">
+                                        <td><strong>AVL Number:</strong></td>
+                                        <td><code>{{organization.avl_number}}</code></td>
+                                    </tr>
+                                    <tr ng-if="organization.nwc_number">
+                                        <td><strong>NWC Number:</strong></td>
+                                        <td><code>{{organization.nwc_number}}</code></td>
+                                    </tr>
+                                    <tr ng-if="organization.se_number">
+                                        <td><strong>SE Number:</strong></td>
+                                        <td><code>{{organization.se_number}}</code></td>
+                                    </tr>
+                                    <tr ng-if="organization.modon_number">
+                                        <td><strong>MODON Number:</strong></td>
+                                        <td><code>{{organization.modon_number}}</code></td>
+                                    </tr>
+                                    <tr ng-if="!organization.avl_number && !organization.nwc_number && !organization.se_number && !organization.modon_number">
+                                        <td colspan="2" class="text-muted text-center">No additional numbers provided</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </uib-tab>
+
+                    <!-- Documents Tab -->
+                    <uib-tab index="1" heading="Documents">
+                        <div style="margin-top: 20px;">
+                            
+                            <!-- Upload Section -->
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="panel panel-info">
+                                        <div class="panel-heading">
+                                            <h4 class="panel-title">
+                                                <i class="fa fa-upload"></i> Upload Documents
+                                            </h4>
+                                        </div>
+                                        <div class="panel-body">
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <div class="form-group">
+                                                        <label>Document Type</label>
+                                                        <select class="form-control" ng-model="selectedAttachmentType">
+                                                            <option value="">Select Type</option>
+                                                            <option ng-repeat="type in attachmentTypes" value="{{type}}">{{type}}</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label>Select File</label>
+                                                        <input type="file" 
+                                                               ngf-select="uploadFile($file, selectedAttachmentType)"
+                                                               ngf-accept="'.pdf,.jpg,.jpeg,.png,.doc,.docx'"
+                                                               ngf-max-size="10MB"
+                                                               class="form-control">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="form-group">
+                                                        <label>&nbsp;</label>
+                                                        <div ng-if="isUploading" class="progress">
+                                                            <div class="progress-bar" 
+                                                                 role="progressbar" 
+                                                                 style="width: {{uploadProgress}}%">
+                                                                {{uploadProgress}}%
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <small class="help-block">
+                                                <i class="fa fa-info-circle"></i>
+                                                Accepted formats: PDF, JPG, PNG, DOC, DOCX. Maximum size: 10MB
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Documents List -->
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h5><i class="fa fa-files-o"></i> Uploaded Documents</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Type</th>
+                                                    <th>File Name</th>
+                                                    <th>Size</th>
+                                                    <th>Uploaded</th>
+                                                    <th>Status</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr ng-if="!organization.attachments || organization.attachments.length === 0">
+                                                    <td colspan="6" class="text-center text-muted">
+                                                        No documents uploaded yet
+                                                    </td>
+                                                </tr>
+                                                <tr ng-repeat="attachment in organization.attachments">
+                                                    <td>
+                                                        <i class="fa" ng-class="getAttachmentIcon(attachment.attachment_type)"></i>
+                                                        {{attachment.attachment_type}}
+                                                    </td>
+                                                    <td>
+                                                        <strong>{{attachment.original_name}}</strong>
+                                                        <br>
+                                                        <small class="text-muted">{{attachment.file_name}}</small>
+                                                    </td>
+                                                    <td>{{attachment.file_size_kb}} KB</td>
+                                                    <td>{{attachment.uploaded_at | date:'MMM dd, yyyy HH:mm'}}</td>
+                                                    <td>
+                                                        <span class="label" ng-class="getVerificationStatusClass(attachment.is_verified)">
+                                                            {{getVerificationStatusText(attachment.is_verified)}}
+                                                        </span>
+                                                        <div ng-if="attachment.verified_at">
+                                                            <small class="text-muted">
+                                                                Verified: {{attachment.verified_at | date:'MMM dd, yyyy'}}
+                                                            </small>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-xs">
+                                                            <a href="{{attachment.download_url}}" 
+                                                               class="btn btn-default" 
+                                                               title="Download"
+                                                               target="_blank">
+                                                                <i class="fa fa-download"></i>
+                                                            </a>
+                                                            <button class="btn btn-success" 
+                                                                    ng-if="currentUser.isAdmin && !attachment.is_verified"
+                                                                    ng-click="verifyAttachment(attachment.id)"
+                                                                    title="Verify">
+                                                                <i class="fa fa-check"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </uib-tab>
+
+                    <!-- Users Tab -->
+                    <uib-tab index="2" heading="Users">
+                        <div style="margin-top: 20px;">
+                            
+                            <!-- Add User Section -->
+                            <div class="row" ng-if="currentUser.canManageUsers">
+                                <div class="col-md-12">
+                                    <div class="panel panel-info">
+                                        <div class="panel-heading">
+                                            <h4 class="panel-title">
+                                                <i class="fa fa-user-plus"></i> Add User
+                                            </h4>
+                                        </div>
+                                        <div class="panel-body">
+                                            <form ng-submit="addUser()">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <div class="form-group">
+                                                            <label>User</label>
+                                                            <select class="form-control" ng-model="newUser.user_id" required>
+                                                                <option value="">Select User</option>
+                                                                <!-- This would be populated from a user search API -->
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label>Role</label>
+                                                            <select class="form-control" ng-model="newUser.role" required>
+                                                                <option value="">Select Role</option>
+                                                                <option ng-repeat="role in userRoles" value="{{role}}">{{role | titleCase}}</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label>&nbsp;</label>
+                                                            <button type="submit" class="btn btn-primary form-control">
+                                                                <i class="fa fa-plus"></i> Add User
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Users List -->
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h5><i class="fa fa-users"></i> Organization Users</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>User</th>
+                                                    <th>Role</th>
+                                                    <th>Status</th>
+                                                    <th>Joined</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr ng-if="!organization.users || organization.users.length === 0">
+                                                    <td colspan="5" class="text-center text-muted">
+                                                        No users assigned yet
+                                                    </td>
+                                                </tr>
+                                                <tr ng-repeat="orgUser in organization.users">
+                                                    <td>
+                                                        <strong>{{orgUser.user.first_name}} {{orgUser.user.last_name}}</strong>
+                                                        <br>
+                                                        <small class="text-muted">{{orgUser.user.email}}</small>
+                                                    </td>
+                                                    <td>
+                                                        <span class="label" ng-class="{
+                                                            'label-danger': orgUser.role === 'owner',
+                                                            'label-warning': orgUser.role === 'admin',
+                                                            'label-info': orgUser.role === 'manager',
+                                                            'label-default': orgUser.role === 'member',
+                                                            'label-success': orgUser.role === 'viewer'
+                                                        }">
+                                                            {{orgUser.role | titleCase}}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="label" ng-class="orgUser.is_active ? 'label-success' : 'label-danger'">
+                                                            {{orgUser.is_active ? 'Active' : 'Inactive'}}
+                                                        </span>
+                                                        <div ng-if="!orgUser.approved_at">
+                                                            <small class="text-warning">Pending Approval</small>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        {{orgUser.joined_at | date:'MMM dd, yyyy'}}
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-xs" ng-if="currentUser.canManageUsers">
+                                                            <select class="form-control input-sm" 
+                                                                    ng-model="orgUser.role"
+                                                                    ng-change="updateUserRole(orgUser.user_id, orgUser.role)">
+                                                                <option ng-repeat="role in userRoles" value="{{role}}">{{role | titleCase}}</option>
+                                                            </select>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </uib-tab>
+
+                    <!-- Settings Tab -->
+                    <uib-tab index="3" heading="Settings">
+                        <div style="margin-top: 20px;">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h5><i class="fa fa-cog"></i> Organization Settings</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Setting</th>
+                                                    <th>Value</th>
+                                                    <th>Type</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr ng-if="!organization.settings || organization.settings.length === 0">
+                                                    <td colspan="4" class="text-center text-muted">
+                                                        No settings configured yet
+                                                    </td>
+                                                </tr>
+                                                <tr ng-repeat="setting in organization.settings">
+                                                    <td>
+                                                        <strong>{{setting.setting_key}}</strong>
+                                                        <br>
+                                                        <small class="text-muted">{{setting.description}}</small>
+                                                    </td>
+                                                    <td>
+                                                        <span ng-if="!setting.editing">{{setting.setting_value}}</span>
+                                                        <input ng-if="setting.editing" 
+                                                               type="text" 
+                                                               class="form-control input-sm" 
+                                                               ng-model="setting.setting_value">
+                                                    </td>
+                                                    <td>
+                                                        <span class="label label-default">{{setting.setting_type}}</span>
+                                                        <span ng-if="setting.is_public" class="label label-info">Public</span>
+                                                        <span ng-if="setting.is_encrypted" class="label label-warning">Encrypted</span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-xs" ng-if="currentUser.canManageSettings">
+                                                            <button ng-if="!setting.editing" 
+                                                                    class="btn btn-default" 
+                                                                    ng-click="setting.editing = true">
+                                                                <i class="fa fa-edit"></i>
+                                                            </button>
+                                                            <button ng-if="setting.editing" 
+                                                                    class="btn btn-success" 
+                                                                    ng-click="updateSetting(setting); setting.editing = false">
+                                                                <i class="fa fa-save"></i>
+                                                            </button>
+                                                            <button ng-if="setting.editing" 
+                                                                    class="btn btn-default" 
+                                                                    ng-click="setting.editing = false">
+                                                                <i class="fa fa-times"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </uib-tab>
+
+                    <!-- Statistics Tab -->
+                    <uib-tab index="4" heading="Statistics">
+                        <div style="margin-top: 20px;">
+                            <div class="row" ng-if="organization.stats">
+                                <div class="col-md-3">
+                                    <div class="panel panel-primary">
+                                        <div class="panel-body text-center">
+                                            <h3>{{organization.stats.total_users}}</h3>
+                                            <p>Total Users</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="panel panel-info">
+                                        <div class="panel-body text-center">
+                                            <h3>{{organization.stats.total_attachments}}</h3>
+                                            <p>Total Documents</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="panel panel-success">
+                                        <div class="panel-body text-center">
+                                            <h3>{{organization.stats.verified_attachments}}</h3>
+                                            <p>Verified Documents</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="panel panel-warning">
+                                        <div class="panel-body text-center">
+                                            <h3>{{organization.stats.pending_verifications}}</h3>
+                                            <p>Pending Verifications</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row" ng-if="organization.verification_status">
+                                <div class="col-md-12">
+                                    <h5><i class="fa fa-check-circle"></i> Verification Status</h5>
+                                    <div class="progress">
+                                        <div class="progress-bar progress-bar-success" 
+                                             style="width: {{organization.verification_status.completion_percentage}}%">
+                                            {{organization.verification_status.completion_percentage}}% Complete
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>Required Documents:</h6>
+                                            <ul class="list-unstyled">
+                                                <li ng-repeat="doc in organization.verification_status.required_documents">
+                                                    <i class="fa fa-file-o"></i> {{doc}}
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>Verified Documents:</h6>
+                                            <ul class="list-unstyled">
+                                                <li ng-repeat="doc in organization.verification_status.verified_documents">
+                                                    <i class="fa fa-check text-success"></i> {{doc}}
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </uib-tab>
+
+                </uib-tabset>
+            </div>
+        </div>
+    </div>
+</div>
