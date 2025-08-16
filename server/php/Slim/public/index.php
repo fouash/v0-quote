@@ -3689,67 +3689,82 @@ $app->GET('/api/v1/stats', function ($request, $response, $args) {
  * Output-Formats: [application/json]
  */
 $app->POST('/api/v1/attachments', function ($request, $response, $args) {
-    global $configuration;
+    require_once '../lib/FileUploadSecurity.php';
+    
     $args = $request->getQueryParams();
-    $file = $request->getUploadedFiles();
-    $newfile = $file['file'];
-    $type = pathinfo($newfile->getClientFilename(), PATHINFO_EXTENSION);
-    $name = md5(time());
-    $class = $args['class'];
-    $attachment_settings = getAttachmentSettings($class);
-    $file = $_FILES['file'];
-    $file_formats = explode(",", $attachment_settings['allowed_file_formats']);
-    $file_formats = array_map('trim', $file_formats);
-    $max_file_size = $attachment_settings['allowed_file_size'];
-    $kilobyte = 1024;
-    $megabyte = $kilobyte * 1024;
-    $file["type"] = get_mime($file['tmp_name']);   
-    $current_file_size = round($file["size"] / $megabyte, 2);
-    if (in_array($file["type"], $file_formats) || empty($attachment_settings['allowed_file_formats'])) {
-        if (empty($max_file_size) || (!empty($max_file_size) && $current_file_size <= $max_file_size)) {
-            if (!file_exists(APP_PATH . '/media/tmp/')) {
-                mkdir(APP_PATH . '/media/tmp/');
-            }
-            if ($type == 'php') {
-                $type = 'txt';
-            }
-            if (move_uploaded_file($newfile->file, APP_PATH . '/media/tmp/' . $name . '.' . $type) === true) {
-                $filename = $name . '.' . $type;
-                $response = array(
-                    'attachment' => $filename,
-                    'error' => array(
-                        'code' => 0,
-                        'message' => ''
-                    )
-                );
-            } else {
-                $response = array(
-                    'error' => array(
-                        'code' => 1,
-                        'message' => 'Attachment could not be added.',
-                        'fields' => ''
-                    )
-                );
-            }
-        } else {
-            $response = array(
-                'error' => array(
-                    'code' => 1,
-                    'message' => "The uploaded file size exceeds the allowed " . $attachment_settings['allowed_file_size'] . "MB",
-                    'fields' => ''
-                )
-            );
-        }
-    } else {
-        $response = array(
-            'error' => array(
+    $uploadedFiles = $request->getUploadedFiles();
+    
+    if (!isset($uploadedFiles['file'])) {
+        return renderWithJson([
+            'error' => [
                 'code' => 1,
-                'message' => "File couldn't be uploaded. Allowed extensions: " . $attachment_settings['allowed_file_extensions'],
+                'message' => 'No file uploaded',
                 'fields' => ''
-            )
-        );
+            ]
+        ]);
     }
-    return renderWithJson($response);
+    
+    $uploadedFile = $uploadedFiles['file'];
+    $class = $args['class'] ?? '';
+    
+    // Convert Slim uploaded file to $_FILES format for validation
+    $fileArray = [
+        'name' => $uploadedFile->getClientFilename(),
+        'type' => $uploadedFile->getClientMediaType(),
+        'tmp_name' => $uploadedFile->getStream()->getMetadata('uri'),
+        'size' => $uploadedFile->getSize(),
+        'error' => $uploadedFile->getError()
+    ];
+    
+    // Validate file using secure validation
+    $validation = FileUploadSecurity::validateFile($fileArray, $class);
+    
+    if (!$validation['valid']) {
+        return renderWithJson([
+            'error' => [
+                'code' => 1,
+                'message' => $validation['error'],
+                'fields' => ''
+            ]
+        ]);
+    }
+    
+    // Create secure upload directory
+    $uploadDir = APP_PATH . '/media/tmp/';
+    if (!FileUploadSecurity::createSecureDirectory($uploadDir)) {
+        return renderWithJson([
+            'error' => [
+                'code' => 1,
+                'message' => 'Failed to create upload directory',
+                'fields' => ''
+            ]
+        ]);
+    }
+    
+    // Move file to secure location
+    $targetPath = $uploadDir . $validation['sanitized_name'];
+    
+    try {
+        $uploadedFile->moveTo($targetPath);
+        
+        return renderWithJson([
+            'attachment' => $validation['sanitized_name'],
+            'error' => [
+                'code' => 0,
+                'message' => ''
+            ]
+        ]);
+        
+    } catch (Exception $e) {
+        error_log('File upload error: ' . $e->getMessage());
+        return renderWithJson([
+            'error' => [
+                'code' => 1,
+                'message' => 'Failed to save uploaded file',
+                'fields' => ''
+            ]
+        ]);
+    }
 });
 /**
  * GET pluginsGet

@@ -9,6 +9,7 @@ const cookieParser = require('cookie-parser');
 const rfqRoutes = require('./api/routes/rfqs');
 const bidRoutes = require('./api/routes/bids');
 const authRoutes = require('./api/routes/auth');
+const keywordRoutes = require('./api/routes/keywords');
 const http = require('http');
 
 const app = express();
@@ -68,6 +69,7 @@ const authenticateToken = (req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/rfq', authenticateToken, rfqRoutes);
 app.use('/api/bids', authenticateToken, bidRoutes);
+app.use('/api/keywords', keywordRoutes);
 
 app.get('/', (req, res) => {
     res.send('RFQ Bidding Platform API is running!');
