@@ -7,6 +7,19 @@ const sanitizeForLog = (input) => {
     return String(input).substring(0, 200);
 };
 
+const sanitizeInput = (input) => {
+    if (typeof input === 'string') {
+        return input
+            .replace(/[<>"'&]/g, '')
+            .replace(/javascript:/gi, '')
+            .replace(/on\w+=/gi, '')
+            .replace(/data:/gi, '')
+            .trim()
+            .substring(0, 1000);
+    }
+    return input;
+};
+
 const handleErrors = (err, res) => {
     if (err.message.includes('Invalid ID')) {
         return res.status(400).json({ success: false, message: err.message });
@@ -43,12 +56,17 @@ class BidController {
                 return res.status(400).json({ success: false, message: "Amount and description are required" });
             }
             
+            const numAmount = parseFloat(amount);
+            if (isNaN(numAmount) || numAmount <= 0) {
+                return res.status(400).json({ success: false, message: "Amount must be a positive number" });
+            }
+            
             const bidData = {
                 rfq_id: rfqId,
                 vendor_id: req.user.id,
-                amount,
-                description,
-                delivery_time
+                amount: numAmount,
+                description: sanitizeInput(description),
+                delivery_time: delivery_time ? parseInt(delivery_time) : null
             };
             
             // TODO: Implement BidService.create(bidData)

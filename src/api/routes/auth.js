@@ -1,11 +1,26 @@
 // src/api/routes/auth.js
 const express = require('express');
+const csrf = require('csurf');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const db = require('../../config/db');
 
-// Helpers
-const isValidEmail = (email) => /[^@\s]+@[^@\s]+\.[^@\s]+/.test(email);
+// CSRF protection for auth routes
+const csrfProtection = csrf({ 
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/',
+    domain: process.env.COOKIE_DOMAIN || undefined
+  }
+});
+
+// Helpers - Fixed ReDoS vulnerability with more efficient regex
+const isValidEmail = (email) => {
+    if (!email || typeof email !== 'string' || email.length > 254) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
 const genCode = () => Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit
 const minutesFromNow = (m) => new Date(Date.now() + m * 60 * 1000);
 const slugify = (str) => (str || '')
@@ -18,7 +33,7 @@ const slugify = (str) => (str || '')
 
 // POST /api/auth/otp/request
 // body: { email, purpose = 'registration' }
-router.post('/otp/request', async (req, res) => {
+router.post('/otp/request', csrfProtection, async (req, res) => {
   try {
     const { email, purpose = 'registration' } = req.body || {};
     if (!email || !isValidEmail(email)) {
@@ -37,7 +52,8 @@ router.post('/otp/request', async (req, res) => {
     );
 
     // TODO: Integrate nodemailer to send code by email
-    console.log(`[OTP] ${purpose} code for ${email}: ${code} (expires at ${expiresAt.toISOString()})`);
+    // Log without sensitive data to prevent log injection
+    console.log(`[OTP] Code sent for purpose: ${purpose} to email ending with: ...${email.slice(-10)} (expires at ${expiresAt.toISOString()})`);
 
     return res.status(201).json({ success: true, message: 'OTP sent to email' });
   } catch (err) {
@@ -48,7 +64,7 @@ router.post('/otp/request', async (req, res) => {
 
 // POST /api/auth/otp/verify
 // body: { email, code, purpose, name?, role? }
-router.post('/otp/verify', async (req, res) => {
+router.post('/otp/verify', csrfProtection, async (req, res) => {
   const client = await db._pool?.connect?.() || null;
   try {
     const { email, code, purpose = 'registration', name, role } = req.body || {};

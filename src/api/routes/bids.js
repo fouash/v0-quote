@@ -3,6 +3,7 @@ const express = require('express');
 const csrf = require('csurf');
 const router = express.Router();
 const BidController = require('../../controllers/BidController');
+const { requireRole } = require('../../middleware/auth');
 
 // CSRF protection for state-changing operations
 const csrfProtection = csrf({ 
@@ -10,7 +11,8 @@ const csrfProtection = csrf({
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    path: '/'
+    path: '/',
+    domain: process.env.COOKIE_DOMAIN || undefined
   }
 });
 
@@ -19,13 +21,13 @@ const asyncHandler = (fn) => (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-// PUT /api/bids/:id - Update a bid (CSRF protected)
-router.put('/:id', csrfProtection, asyncHandler(BidController.updateBid));
+// PUT /api/bids/:id - Update a bid (CSRF protected, vendor only)
+router.put('/:id', csrfProtection, requireRole('vendor'), asyncHandler(BidController.updateBid));
 
-// POST /api/bids/:id/award - Award a bid (CSRF protected)
-router.post('/:id/award', csrfProtection, asyncHandler(BidController.awardBid));
+// POST /api/bids/:id/award - Award a bid (CSRF protected, buyer only)
+router.post('/:id/award', csrfProtection, requireRole('buyer'), asyncHandler(BidController.awardBid));
 
-// POST /api/bids/:id/retract - Retract a bid (CSRF protected)
-router.post('/:id/retract', csrfProtection, asyncHandler(BidController.retractBid));
+// POST /api/bids/:id/retract - Retract a bid (CSRF protected, vendor only)
+router.post('/:id/retract', csrfProtection, requireRole('vendor'), asyncHandler(BidController.retractBid));
 
 module.exports = router;

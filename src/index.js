@@ -15,61 +15,33 @@ const http = require('http');
 const app = express();
 
 // --- Security Middlewares ---
-app.use(helmet());
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000,
-  max: process.env.RATE_LIMIT_MAX_REQUESTS || 100
-});
-app.use(limiter);
+const { helmetConfig, rateLimitConfig } = require('./config/security');
+app.use(helmetConfig);
+app.use(rateLimitConfig);
 
 // --- Body Parsing ---
 app.use(cookieParser());
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// --- CORS (development-friendly) ---
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-  next();
-});
+// --- CORS (secure configuration) ---
+const cors = require('cors');
+const { corsConfig } = require('./config/security');
+app.use(cors(corsConfig));
 
 // --- Authentication Middleware ---
-const jwt = require('jsonwebtoken');
+const { authenticateToken, requireRole, optionalAuth } = require('./middleware/auth');
 
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  
-  if (!token) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-  
-  try {
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      throw new Error('JWT_SECRET not configured');
-    }
-    
-    const decoded = jwt.verify(token, jwtSecret);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(403).json({ error: 'Invalid or expired token' });
-  }
-};
+if (!process.env.JWT_SECRET) {
+  console.error('JWT_SECRET environment variable is required');
+  process.exit(1);
+}
 
 // --- Routes ---
 app.use('/api/auth', authRoutes);
-app.use('/api/rfq', authenticateToken, rfqRoutes);
+app.use('/api/rfq', optionalAuth, rfqRoutes);
 app.use('/api/bids', authenticateToken, bidRoutes);
-app.use('/api/keywords', keywordRoutes);
+app.use('/api/keywords', optionalAuth, keywordRoutes);
 
 app.get('/', (req, res) => {
     res.send('RFQ Bidding Platform API is running!');

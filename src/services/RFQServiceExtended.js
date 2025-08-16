@@ -73,10 +73,11 @@ class RFQServiceExtended extends RFQService {
         try {
             await client.query('BEGIN');
             
-            const placeholders = keywords.map((_, index) => `$${index + 2}`).join(',');
-            const query = `DELETE FROM rfq_keywords WHERE rfq_id = $1 AND keyword IN (${placeholders})`;
-            
-            await client.query(query, [rfqId, ...keywords.map(k => k.trim().toLowerCase())]);
+            // Use parameterized query with ANY() to prevent SQL injection
+            await client.query(
+                'DELETE FROM rfq_keywords WHERE rfq_id = $1 AND keyword = ANY($2)',
+                [rfqId, keywords.map(k => k.trim().toLowerCase())]
+            );
             await client.query('COMMIT');
             
             return { success: true, message: 'Keywords removed successfully' };
@@ -144,10 +145,9 @@ class RFQServiceExtended extends RFQService {
 
             // Add keyword search
             if (keywords && keywords.length > 0) {
-                const keywordPlaceholders = keywords.map((_, index) => `$${paramIndex + index}`).join(',');
-                sql += ` AND k.keyword = ANY(ARRAY[${keywordPlaceholders}])`;
-                params.push(...keywords.map(k => k.toLowerCase()));
-                paramIndex += keywords.length;
+                sql += ` AND k.keyword = ANY($${paramIndex})`;
+                params.push(keywords.map(k => String(k).toLowerCase().substring(0, 50)));
+                paramIndex++;
             }
 
             // Add category filter
@@ -170,9 +170,17 @@ class RFQServiceExtended extends RFQService {
                 paramIndex++;
             }
 
-            // Add ordering and pagination
+            // Add ordering and pagination with performance optimization
             sql += ` GROUP BY r.id ORDER BY relevance DESC, r.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-            params.push(Math.min(Math.max(parseInt(limit) || 20, 1), 100), Math.max(parseInt(offset) || 0, 0));
+            const validLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 50); // Reduced max limit
+            const validOffset = Math.max(parseInt(offset) || 0, 0);
+            
+            // Prevent deep pagination for performance
+            if (validOffset > 1000) {
+                throw new Error('Pagination offset too large. Please use more specific filters.');
+            }
+            
+            params.push(validLimit, validOffset);
 
             const { rows } = await client.query(sql, params);
             
@@ -316,20 +324,18 @@ class RFQServiceExtended extends RFQService {
         const { limit = 20, offset = 0 } = options;
 
         try {
-            const keywordPlaceholders = keywords.map((_, index) => `$${index + 1}`).join(',');
-            
             const sql = `
                 SELECT DISTINCT r.*, 
                        array_agg(DISTINCT k.keyword) FILTER (WHERE k.keyword IS NOT NULL) as keywords
                 FROM rfqs r
                 INNER JOIN rfq_keywords k ON r.id = k.rfq_id
-                WHERE k.keyword = ANY(ARRAY[${keywordPlaceholders}])
+                WHERE k.keyword = ANY($1)
                 GROUP BY r.id
                 ORDER BY r.created_at DESC
-                LIMIT $${keywords.length + 1} OFFSET $${keywords.length + 2}
+                LIMIT $2 OFFSET $3
             `;
             
-            const params = [...keywords.map(k => k.toLowerCase()), 
+            const params = [keywords.map(k => String(k).toLowerCase().substring(0, 50)), 
                            Math.min(Math.max(parseInt(limit) || 20, 1), 100), 
                            Math.max(parseInt(offset) || 0, 0)];
             

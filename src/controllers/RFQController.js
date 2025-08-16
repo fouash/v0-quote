@@ -27,7 +27,13 @@ const handleErrors = (err, res) => {
 
 const sanitizeInput = (input) => {
     if (typeof input === 'string') {
-        return input.replace(/[<>"'&]/g, '');
+        return input
+            .replace(/[<>"'&]/g, '')
+            .replace(/javascript:/gi, '')
+            .replace(/on\w+=/gi, '')
+            .replace(/data:/gi, '')
+            .trim()
+            .substring(0, 1000);
     }
     return input;
 };
@@ -86,10 +92,14 @@ class RFQController {
             }
             
             const rfqData = {
-                ...req.body,
                 buyer_id: req.user.id,
                 title: sanitizeInput(req.body.title),
-                description: sanitizeInput(req.body.description)
+                description: sanitizeInput(req.body.description),
+                category_id: req.body.category_id ? parseInt(req.body.category_id) : null,
+                subcategory_id: req.body.subcategory_id ? parseInt(req.body.subcategory_id) : null,
+                budget_min: req.body.budget_min ? parseFloat(req.body.budget_min) : null,
+                budget_max: req.body.budget_max ? parseFloat(req.body.budget_max) : null,
+                currency: req.body.currency ? String(req.body.currency).substring(0, 3) : 'USD'
             };
             
             const newRFQ = await RFQService.create(rfqData);
@@ -113,9 +123,13 @@ class RFQController {
             }
             
             const updateData = {
-                ...req.body,
                 title: req.body.title ? sanitizeInput(req.body.title) : undefined,
-                description: req.body.description ? sanitizeInput(req.body.description) : undefined
+                description: req.body.description ? sanitizeInput(req.body.description) : undefined,
+                category_id: req.body.category_id ? parseInt(req.body.category_id) : undefined,
+                subcategory_id: req.body.subcategory_id ? parseInt(req.body.subcategory_id) : undefined,
+                budget_min: req.body.budget_min ? parseFloat(req.body.budget_min) : undefined,
+                budget_max: req.body.budget_max ? parseFloat(req.body.budget_max) : undefined,
+                currency: req.body.currency ? String(req.body.currency).substring(0, 3) : undefined
             };
             const userId = req.user.id;
             const updatedRFQ = await RFQService.update(id, updateData, userId);
@@ -134,6 +148,9 @@ class RFQController {
     async closeRFQ(req, res) {
         try {
             const { id } = req.params;
+            if (!id || isNaN(id)) {
+                return res.status(400).json({ success: false, message: "Invalid RFQ ID" });
+            }
             const userId = req.user.id;
             const closedRFQ = await RFQService.close(id, userId);
             res.status(200).json({ success: true, message: "RFQ closed successfully", data: closedRFQ });
