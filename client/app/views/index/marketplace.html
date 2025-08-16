@@ -1,0 +1,685 @@
+<div class="marketplace-container">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <h1 class="hero-title">{{ 'MARKETPLACE_TITLE' | translate }}</h1>
+                    <p class="hero-subtitle">{{ 'MARKETPLACE_SUBTITLE' | translate }}</p>
+                    
+                    <!-- Quick Search -->
+                    <div class="quick-search-box">
+                        <div class="search-form">
+                            <div class="input-group">
+                                <input type="text" 
+                                       class="form-control search-input" 
+                                       ng-model="searchQuery"
+                                       placeholder="{{ 'SEARCH_SERVICES_PLACEHOLDER' | translate }}"
+                                       ng-keyup="$event.keyCode == 13 && searchServices()">
+                                <div class="input-group-btn">
+                                    <button class="btn btn-primary search-btn" ng-click="searchServices()">
+                                        <i class="fa fa-search"></i> {{ 'SEARCH' | translate }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="marketplace-nav">
+        <div class="container">
+            <ul class="nav nav-tabs marketplace-tabs">
+                <li class="nav-item" ng-class="{'active': activeTab === 'browse'}">
+                    <a class="nav-link" ng-click="setActiveTab('browse')">
+                        <i class="fa fa-th-large"></i> {{ 'BROWSE_CATEGORIES' | translate }}
+                    </a>
+                </li>
+                <li class="nav-item" ng-class="{'active': activeTab === 'vendors'}">
+                    <a class="nav-link" ng-click="setActiveTab('vendors')">
+                        <i class="fa fa-users"></i> {{ 'FIND_VENDORS' | translate }}
+                    </a>
+                </li>
+                <li class="nav-item" ng-class="{'active': activeTab === 'quotes'}">
+                    <a class="nav-link" ng-click="setActiveTab('quotes')">
+                        <i class="fa fa-file-text"></i> {{ 'POST_QUOTE' | translate }}
+                    </a>
+                </li>
+                <li class="nav-item" ng-class="{'active': activeTab === 'featured'}">
+                    <a class="nav-link" ng-click="setActiveTab('featured')">
+                        <i class="fa fa-star"></i> {{ 'FEATURED_SERVICES' | translate }}
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="marketplace-content">
+        <div class="container">
+            
+            <!-- Browse Categories Tab -->
+            <div ng-show="activeTab === 'browse'" class="tab-content">
+                <div class="row">
+                    <!-- Category Filters Sidebar -->
+                    <div class="col-md-3">
+                        <div class="filters-sidebar">
+                            <h4>{{ 'FILTER_BY_CATEGORY' | translate }}</h4>
+                            
+                            <!-- Main Categories -->
+                            <div class="filter-section">
+                                <h5>{{ 'MAIN_CATEGORIES' | translate }}</h5>
+                                <div class="category-filters">
+                                    <div ng-repeat="category in categories" class="category-filter-item">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" 
+                                                   ng-model="selectedCategories[category.id]"
+                                                   ng-change="filterByCategory(category.id)">
+                                            <span class="category-icon">
+                                                <i class="fa" ng-class="'fa-' + category.icon"></i>
+                                            </span>
+                                            <span class="category-name">{{ category.name }}</span>
+                                            <span class="category-count">({{ category.organization_count || 0 }})</span>
+                                        </label>
+                                        
+                                        <!-- Subcategories -->
+                                        <div ng-show="selectedCategories[category.id]" class="subcategory-filters">
+                                            <div ng-repeat="subcategory in category.subcategories" class="subcategory-item">
+                                                <label class="checkbox-label subcategory-label">
+                                                    <input type="checkbox" 
+                                                           ng-model="selectedSubcategories[subcategory.id]"
+                                                           ng-change="filterBySubcategory(subcategory.id)">
+                                                    <span>{{ subcategory.name }}</span>
+                                                    <span class="subcategory-count">({{ subcategory.organization_count || 0 }})</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Filters -->
+                            <div class="filter-section">
+                                <h5>{{ 'EXPERTISE_LEVEL' | translate }}</h5>
+                                <div class="expertise-filters">
+                                    <label class="checkbox-label" ng-repeat="level in expertiseLevels">
+                                        <input type="checkbox" 
+                                               ng-model="selectedExpertise[level.value]"
+                                               ng-change="applyFilters()">
+                                        <span>{{ level.label | translate }}</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="filter-section">
+                                <h5>{{ 'BUDGET_RANGE' | translate }}</h5>
+                                <div class="budget-filters">
+                                    <div class="budget-range">
+                                        <label>{{ 'MIN_BUDGET' | translate }}</label>
+                                        <input type="number" 
+                                               class="form-control" 
+                                               ng-model="filters.minBudget"
+                                               ng-change="applyFilters()"
+                                               placeholder="0">
+                                    </div>
+                                    <div class="budget-range">
+                                        <label>{{ 'MAX_BUDGET' | translate }}</label>
+                                        <input type="number" 
+                                               class="form-control" 
+                                               ng-model="filters.maxBudget"
+                                               ng-change="applyFilters()"
+                                               placeholder="{{ 'NO_LIMIT' | translate }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="filter-section">
+                                <h5>{{ 'LOCATION' | translate }}</h5>
+                                <div class="location-filters">
+                                    <input type="text" 
+                                           class="form-control" 
+                                           ng-model="filters.location"
+                                           ng-change="applyFilters()"
+                                           placeholder="{{ 'ENTER_CITY_OR_COUNTRY' | translate }}">
+                                </div>
+                            </div>
+
+                            <div class="filter-section">
+                                <h5>{{ 'VERIFICATION_STATUS' | translate }}</h5>
+                                <div class="verification-filters">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" 
+                                               ng-model="filters.verifiedOnly"
+                                               ng-change="applyFilters()">
+                                        <span>{{ 'VERIFIED_ONLY' | translate }}</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" 
+                                               ng-model="filters.featuredOnly"
+                                               ng-change="applyFilters()">
+                                        <span>{{ 'FEATURED_ONLY' | translate }}</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Clear Filters -->
+                            <div class="filter-actions">
+                                <button class="btn btn-secondary btn-sm" ng-click="clearFilters()">
+                                    <i class="fa fa-refresh"></i> {{ 'CLEAR_FILTERS' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categories Grid -->
+                    <div class="col-md-9">
+                        <div class="categories-header">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h3>{{ 'BUSINESS_CATEGORIES' | translate }}</h3>
+                                    <p class="text-muted">{{ 'CATEGORIES_DESCRIPTION' | translate }}</p>
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    <div class="view-options">
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm" 
+                                                    ng-class="{'btn-primary': viewMode === 'grid', 'btn-default': viewMode !== 'grid'}"
+                                                    ng-click="setViewMode('grid')">
+                                                <i class="fa fa-th"></i>
+                                            </button>
+                                            <button class="btn btn-sm" 
+                                                    ng-class="{'btn-primary': viewMode === 'list', 'btn-default': viewMode !== 'list'}"
+                                                    ng-click="setViewMode('list')">
+                                                <i class="fa fa-list"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Categories Grid View -->
+                        <div ng-show="viewMode === 'grid'" class="categories-grid">
+                            <div class="row">
+                                <div ng-repeat="category in filteredCategories" class="col-md-6 col-lg-4">
+                                    <div class="category-card" ng-click="viewCategory(category)">
+                                        <div class="category-header" ng-style="{'background-color': category.color}">
+                                            <div class="category-icon">
+                                                <i class="fa" ng-class="'fa-' + category.icon"></i>
+                                            </div>
+                                            <h4 class="category-title">{{ category.name }}</h4>
+                                        </div>
+                                        <div class="category-body">
+                                            <p class="category-description">{{ category.description }}</p>
+                                            <div class="category-stats">
+                                                <div class="stat-item">
+                                                    <span class="stat-number">{{ category.subcategory_count || 0 }}</span>
+                                                    <span class="stat-label">{{ 'SUBCATEGORIES' | translate }}</span>
+                                                </div>
+                                                <div class="stat-item">
+                                                    <span class="stat-number">{{ category.organization_count || 0 }}</span>
+                                                    <span class="stat-label">{{ 'VENDORS' | translate }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="category-subcategories">
+                                                <span ng-repeat="subcategory in category.subcategories | limitTo:3" 
+                                                      class="subcategory-tag">
+                                                    {{ subcategory.name }}
+                                                </span>
+                                                <span ng-if="category.subcategories.length > 3" class="more-tag">
+                                                    +{{ category.subcategories.length - 3 }} {{ 'MORE' | translate }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="category-footer">
+                                            <button class="btn btn-primary btn-sm">
+                                                {{ 'EXPLORE_CATEGORY' | translate }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Categories List View -->
+                        <div ng-show="viewMode === 'list'" class="categories-list">
+                            <div ng-repeat="category in filteredCategories" class="category-list-item">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <div class="category-icon-large" ng-style="{'background-color': category.color}">
+                                            <i class="fa" ng-class="'fa-' + category.icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <h4 class="category-title">{{ category.name }}</h4>
+                                        <p class="category-description">{{ category.description }}</p>
+                                        <div class="subcategories-list">
+                                            <span ng-repeat="subcategory in category.subcategories" 
+                                                  class="subcategory-link"
+                                                  ng-click="viewSubcategory(subcategory)">
+                                                {{ subcategory.name }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 text-right">
+                                        <div class="category-stats-vertical">
+                                            <div class="stat-item">
+                                                <span class="stat-number">{{ category.organization_count || 0 }}</span>
+                                                <span class="stat-label">{{ 'VENDORS' | translate }}</span>
+                                            </div>
+                                            <div class="stat-item">
+                                                <span class="stat-number">{{ category.subcategory_count || 0 }}</span>
+                                                <span class="stat-label">{{ 'SERVICES' | translate }}</span>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-primary" ng-click="viewCategory(category)">
+                                            {{ 'VIEW_VENDORS' | translate }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Find Vendors Tab -->
+            <div ng-show="activeTab === 'vendors'" class="tab-content">
+                <div class="row">
+                    <!-- Vendor Filters -->
+                    <div class="col-md-3">
+                        <div class="filters-sidebar">
+                            <h4>{{ 'FILTER_VENDORS' | translate }}</h4>
+                            
+                            <!-- Quick Category Filter -->
+                            <div class="filter-section">
+                                <h5>{{ 'CATEGORY' | translate }}</h5>
+                                <select class="form-control" 
+                                        ng-model="vendorFilters.categoryId"
+                                        ng-change="loadVendorSubcategories(); filterVendors()">
+                                    <option value="">{{ 'ALL_CATEGORIES' | translate }}</option>
+                                    <option ng-repeat="category in categories" value="{{ category.id }}">
+                                        {{ category.name }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="filter-section" ng-show="vendorSubcategories.length > 0">
+                                <h5>{{ 'SUBCATEGORY' | translate }}</h5>
+                                <select class="form-control" 
+                                        ng-model="vendorFilters.subcategoryId"
+                                        ng-change="filterVendors()">
+                                    <option value="">{{ 'ALL_SUBCATEGORIES' | translate }}</option>
+                                    <option ng-repeat="subcategory in vendorSubcategories" value="{{ subcategory.id }}">
+                                        {{ subcategory.name }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Vendor-specific filters -->
+                            <div class="filter-section">
+                                <h5>{{ 'RATING' | translate }}</h5>
+                                <div class="rating-filters">
+                                    <label class="checkbox-label" ng-repeat="rating in ratingOptions">
+                                        <input type="checkbox" 
+                                               ng-model="vendorFilters.ratings[rating.value]"
+                                               ng-change="filterVendors()">
+                                        <span class="rating-stars">
+                                            <i ng-repeat="star in rating.stars track by $index" 
+                                               class="fa fa-star" 
+                                               ng-class="{'text-warning': star, 'text-muted': !star}"></i>
+                                        </span>
+                                        <span>{{ rating.label | translate }}</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="filter-section">
+                                <h5>{{ 'AVAILABILITY' | translate }}</h5>
+                                <div class="availability-filters">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" 
+                                               ng-model="vendorFilters.availableNow"
+                                               ng-change="filterVendors()">
+                                        <span class="availability-indicator available"></span>
+                                        <span>{{ 'AVAILABLE_NOW' | translate }}</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" 
+                                               ng-model="vendorFilters.responseTime24h"
+                                               ng-change="filterVendors()">
+                                        <span>{{ 'RESPONDS_WITHIN_24H' | translate }}</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vendors List -->
+                    <div class="col-md-9">
+                        <div class="vendors-header">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h3>{{ 'FIND_VENDORS' | translate }}</h3>
+                                    <p class="text-muted">
+                                        {{ 'SHOWING_RESULTS' | translate }} 
+                                        <strong>{{ filteredVendors.length }}</strong> 
+                                        {{ 'OF' | translate }} 
+                                        <strong>{{ totalVendors }}</strong> 
+                                        {{ 'VENDORS' | translate }}
+                                    </p>
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    <div class="sort-options">
+                                        <label>{{ 'SORT_BY' | translate }}:</label>
+                                        <select class="form-control form-control-sm" 
+                                                ng-model="vendorSortBy"
+                                                ng-change="sortVendors()">
+                                            <option value="relevance">{{ 'RELEVANCE' | translate }}</option>
+                                            <option value="rating">{{ 'HIGHEST_RATED' | translate }}</option>
+                                            <option value="experience">{{ 'MOST_EXPERIENCED' | translate }}</option>
+                                            <option value="recent">{{ 'RECENTLY_JOINED' | translate }}</option>
+                                            <option value="alphabetical">{{ 'ALPHABETICAL' | translate }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Vendors Grid -->
+                        <div class="vendors-grid">
+                            <div class="row">
+                                <div ng-repeat="vendor in filteredVendors | limitTo:vendorLimit" class="col-md-6 col-lg-4">
+                                    <div class="vendor-card">
+                                        <div class="vendor-header">
+                                            <div class="vendor-avatar">
+                                                <img ng-src="{{ vendor.logo || '/images/default-vendor.png' }}" 
+                                                     alt="{{ vendor.name }}">
+                                                <div class="verification-badge" ng-show="vendor.is_verified">
+                                                    <i class="fa fa-check-circle text-success"></i>
+                                                </div>
+                                            </div>
+                                            <div class="vendor-info">
+                                                <h5 class="vendor-name">{{ vendor.name }}</h5>
+                                                <p class="vendor-location">
+                                                    <i class="fa fa-map-marker"></i> 
+                                                    {{ vendor.city }}, {{ vendor.country }}
+                                                </p>
+                                                <div class="vendor-rating">
+                                                    <div class="rating-stars">
+                                                        <i ng-repeat="star in [1,2,3,4,5]" 
+                                                           class="fa fa-star"
+                                                           ng-class="{'text-warning': star <= vendor.rating, 'text-muted': star > vendor.rating}"></i>
+                                                    </div>
+                                                    <span class="rating-text">({{ vendor.review_count || 0 }} {{ 'REVIEWS' | translate }})</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="vendor-body">
+                                            <p class="vendor-description">{{ vendor.description | limitTo:120 }}...</p>
+                                            
+                                            <div class="vendor-categories">
+                                                <span ng-repeat="category in vendor.categories | limitTo:2" 
+                                                      class="category-badge">
+                                                    {{ category.name }}
+                                                </span>
+                                                <span ng-if="vendor.categories.length > 2" class="more-categories">
+                                                    +{{ vendor.categories.length - 2 }} {{ 'MORE' | translate }}
+                                                </span>
+                                            </div>
+
+                                            <div class="vendor-stats">
+                                                <div class="stat-item">
+                                                    <i class="fa fa-briefcase"></i>
+                                                    <span>{{ vendor.completed_projects || 0 }} {{ 'PROJECTS' | translate }}</span>
+                                                </div>
+                                                <div class="stat-item">
+                                                    <i class="fa fa-clock-o"></i>
+                                                    <span>{{ vendor.response_time || 'N/A' }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="vendor-footer">
+                                            <div class="vendor-actions">
+                                                <button class="btn btn-outline-primary btn-sm" 
+                                                        ng-click="viewVendorProfile(vendor)">
+                                                    {{ 'VIEW_PROFILE' | translate }}
+                                                </button>
+                                                <button class="btn btn-primary btn-sm" 
+                                                        ng-click="contactVendor(vendor)">
+                                                    {{ 'CONTACT' | translate }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Load More -->
+                        <div class="text-center" ng-show="filteredVendors.length > vendorLimit">
+                            <button class="btn btn-outline-primary" ng-click="loadMoreVendors()">
+                                {{ 'LOAD_MORE_VENDORS' | translate }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Post Quote Tab -->
+            <div ng-show="activeTab === 'quotes'" class="tab-content">
+                <div class="row">
+                    <div class="col-md-8 col-md-offset-2">
+                        <div class="quote-form-container">
+                            <div class="text-center">
+                                <h3>{{ 'POST_YOUR_QUOTE_REQUEST' | translate }}</h3>
+                                <p class="text-muted">{{ 'QUOTE_FORM_DESCRIPTION' | translate }}</p>
+                            </div>
+
+                            <form name="quoteForm" ng-submit="submitQuote()" novalidate>
+                                <div class="form-group">
+                                    <label>{{ 'PROJECT_TITLE' | translate }} *</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           ng-model="quote.title"
+                                           required
+                                           placeholder="{{ 'ENTER_PROJECT_TITLE' | translate }}">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>{{ 'PROJECT_DESCRIPTION' | translate }} *</label>
+                                    <textarea class="form-control" 
+                                              rows="4"
+                                              ng-model="quote.description"
+                                              required
+                                              placeholder="{{ 'DESCRIBE_YOUR_PROJECT' | translate }}"></textarea>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ 'CATEGORY' | translate }} *</label>
+                                            <select class="form-control" 
+                                                    ng-model="quote.categoryId"
+                                                    ng-change="loadQuoteSubcategories()"
+                                                    required>
+                                                <option value="">{{ 'SELECT_CATEGORY' | translate }}</option>
+                                                <option ng-repeat="category in categories" value="{{ category.id }}">
+                                                    {{ category.name }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group" ng-show="quoteSubcategories.length > 0">
+                                            <label>{{ 'SUBCATEGORY' | translate }}</label>
+                                            <select class="form-control" ng-model="quote.subcategoryId">
+                                                <option value="">{{ 'SELECT_SUBCATEGORY' | translate }}</option>
+                                                <option ng-repeat="subcategory in quoteSubcategories" value="{{ subcategory.id }}">
+                                                    {{ subcategory.name }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ 'BUDGET_RANGE' | translate }}</label>
+                                            <select class="form-control" ng-model="quote.budgetRange">
+                                                <option value="">{{ 'SELECT_BUDGET_RANGE' | translate }}</option>
+                                                <option value="1000-5000">SAR 1,000 - 5,000</option>
+                                                <option value="5000-15000">SAR 5,000 - 15,000</option>
+                                                <option value="15000-50000">SAR 15,000 - 50,000</option>
+                                                <option value="50000-100000">SAR 50,000 - 100,000</option>
+                                                <option value="100000+">SAR 100,000+</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ 'PROJECT_DEADLINE' | translate }}</label>
+                                            <input type="date" 
+                                                   class="form-control" 
+                                                   ng-model="quote.deadline"
+                                                   min="{{ today }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>{{ 'REQUIRED_SKILLS' | translate }}</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           ng-model="quote.skills"
+                                           placeholder="{{ 'ENTER_REQUIRED_SKILLS' | translate }}">
+                                    <small class="form-text text-muted">{{ 'SKILLS_HELP_TEXT' | translate }}</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>{{ 'ATTACHMENTS' | translate }}</label>
+                                    <input type="file" 
+                                           class="form-control" 
+                                           multiple
+                                           accept=".pdf,.doc,.docx,.jpg,.png">
+                                    <small class="form-text text-muted">{{ 'ATTACHMENTS_HELP_TEXT' | translate }}</small>
+                                </div>
+
+                                <div class="form-actions text-center">
+                                    <button type="submit" 
+                                            class="btn btn-primary btn-lg"
+                                            ng-disabled="quoteForm.$invalid || submittingQuote">
+                                        <i class="fa fa-paper-plane" ng-show="!submittingQuote"></i>
+                                        <i class="fa fa-spinner fa-spin" ng-show="submittingQuote"></i>
+                                        {{ submittingQuote ? ('SUBMITTING' | translate) : ('POST_QUOTE_REQUEST' | translate) }}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Featured Services Tab -->
+            <div ng-show="activeTab === 'featured'" class="tab-content">
+                <div class="featured-services">
+                    <div class="text-center">
+                        <h3>{{ 'FEATURED_SERVICES' | translate }}</h3>
+                        <p class="text-muted">{{ 'FEATURED_SERVICES_DESCRIPTION' | translate }}</p>
+                    </div>
+
+                    <div class="row">
+                        <div ng-repeat="service in featuredServices" class="col-md-4">
+                            <div class="featured-service-card">
+                                <div class="service-image">
+                                    <img ng-src="{{ service.image || '/images/default-service.jpg' }}" 
+                                         alt="{{ service.title }}">
+                                    <div class="featured-badge">
+                                        <i class="fa fa-star"></i> {{ 'FEATURED' | translate }}
+                                    </div>
+                                </div>
+                                <div class="service-content">
+                                    <h5 class="service-title">{{ service.title }}</h5>
+                                    <p class="service-description">{{ service.description | limitTo:100 }}...</p>
+                                    <div class="service-meta">
+                                        <div class="service-vendor">
+                                            <img ng-src="{{ service.vendor.logo }}" alt="{{ service.vendor.name }}">
+                                            <span>{{ service.vendor.name }}</span>
+                                        </div>
+                                        <div class="service-price">
+                                            {{ 'STARTING_AT' | translate }} <strong>SAR {{ service.starting_price | number }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="service-footer">
+                                    <button class="btn btn-primary btn-block" ng-click="viewService(service)">
+                                        {{ 'VIEW_SERVICE' | translate }}
+                                    </button>
+                                </div>
+                            
+</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Footer -->
+    <div class="quick-actions-footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="quick-action-card">
+                        <div class="action-icon">
+                            <i class="fa fa-search"></i>
+                        </div>
+                        <h5>{{ 'FIND_SERVICES' | translate }}</h5>
+                        <p>{{ 'FIND_SERVICES_DESC' | translate }}</p>
+                        <button class="btn btn-outline-primary" ng-click="setActiveTab('browse')">
+                            {{ 'BROWSE_NOW' | translate }}
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="quick-action-card">
+                        <div class="action-icon">
+                            <i class="fa fa-users"></i>
+                        </div>
+                        <h5>{{ 'HIRE_EXPERTS' | translate }}</h5>
+                        <p>{{ 'HIRE_EXPERTS_DESC' | translate }}</p>
+                        <button class="btn btn-outline-primary" ng-click="setActiveTab('vendors')">
+                            {{ 'FIND_EXPERTS' | translate }}
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="quick-action-card">
+                        <div class="action-icon">
+                            <i class="fa fa-plus"></i>
+                        </div>
+                        <h5>{{ 'POST_PROJECT' | translate }}</h5>
+                        <p>{{ 'POST_PROJECT_DESC' | translate }}</p>
+                        <button class="btn btn-outline-primary" ng-click="setActiveTab('quotes')">
+                            {{ 'POST_NOW' | translate }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" ng-show="isLoading">
+    <div class="loading-spinner">
+        <i class="fa fa-spinner fa-spin fa-3x"></i>
+        <p>{{ loadingMessage || ('LOADING' | translate) }}</p>
+    </div>
+</div>
