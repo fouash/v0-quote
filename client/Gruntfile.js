@@ -36,7 +36,8 @@ module.exports = function(grunt) {
         multi: 'grunt-multi',
         'multi-single': 'grunt-multi',
         'sftp-deploy': 'grunt-sftp-deploy',
-        i18nextract: 'grunt-angular-translate'
+        i18nextract: 'grunt-angular-translate',
+        babel: 'grunt-babel'
     });
     // Configurable paths for the application
     var appConfig = {
@@ -193,8 +194,8 @@ module.exports = function(grunt) {
         postcss: {
             options: {
                 processors: [
-          require('autoprefixer-core')({
-                        browsers: ['last 1 version']
+          require('autoprefixer')({
+                        overrideBrowserslist: ['last 1 version']
                     })
         ]
             },
@@ -393,16 +394,19 @@ module.exports = function(grunt) {
                 dest: '.tmp/templateCache.js'
             }
         },
-        // ng-annotate tries to make the code safe for minification automatically
-        // by using the Angular long form for dependency injection.
-        ngAnnotate: {
+        // Babel with angularjs-annotate plugin for dependency injection
+        babel: {
+            options: {
+                presets: [],
+                plugins: ['angularjs-annotate']
+            },
             dist: {
                 files: [{
                     expand: true,
                     cwd: '.tmp/concat/scripts',
                     src: '*.js',
                     dest: '.tmp/concat/scripts'
-        }]
+                }]
             }
         },
         // Replace Google CDN references
@@ -909,7 +913,7 @@ module.exports = function(grunt) {
     'postcss',
     'ngtemplates',
     'concat',
-  //  'ngAnnotate',
+    'babel',
     'copy:dist',
     'cdnify',
     'cssmin',

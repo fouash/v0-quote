@@ -66,7 +66,7 @@ Most of the functionalities are automated as it feels the current stats and take
 
 #### For building (build tools)
 
-* Nodejs
+* Node.js >= 18.0.0
 * Composer
 * Bower
 * Grunt
