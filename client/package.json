@@ -3,7 +3,9 @@
   "private": true,
   "devDependencies": {
     "autoprefixer-core": "^5.2.1",
-    "grunt": "^0.4.5",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "grunt": "^1.6.1",
     "grunt-angular-templates": "^0.5.7",
     "grunt-closure-compiler": "^0.0.21",
     "grunt-complexity": "~0.3.0",
@@ -19,7 +21,7 @@
     "grunt-contrib-jshint": "^0.11.0",
     "grunt-contrib-less": "~0.11.0",
     "grunt-contrib-uglify": "^0.7.0",
-    "grunt-contrib-watch": "^0.6.1",
+    "grunt-contrib-watch": "^1.1.0",
     "grunt-exec": "^0.4.7",
     "grunt-filerev": "^2.1.2",
     "grunt-google-cdn": "^0.4.3",
@@ -55,31 +57,27 @@
     "karma-coverage": "^1.0.0",
     "karma-jasmine": "^1.0.2",
     "karma-phantomjs-launcher": "^1.0.0",
+    "nodemon": "^2.0.4",
     "phantomjs-prebuilt": "^2.1.7",
     "time-grunt": "^1.0.0"
   },
   "engines": {
     "node": ">=0.10.0"
   },
-    "scripts": {
+  "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
     "dev": "nodemon src/index.js",
     "lint": "eslint src/**/*.js",
     "format": "prettier --write src/**/*.js"
   },
   "dependencies": {
-    "grunt-angular-translate": "^0.3.0"
     "bcryptjs": "^2.4.3",
-  }
-
-      "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "nodemon": "^2.0.4"
-  }
+    "grunt-angular-translate": "^0.3.0"
   },
   "lint-staged": {
-    "*.js": ["eslint --fix", "prettier --write"]
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   }
-}
 }

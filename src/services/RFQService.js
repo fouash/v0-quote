@@ -135,4 +135,4 @@ class RFQService {
     }
 }
 
-module.exports = new RFQService();
+module.exports = RFQService;

@@ -1,5 +1,6 @@
 // src/controllers/RFQController.js
 const RFQService = require('../services/RFQService');
+const rfqService = new RFQService();
 
 const sanitizeForLog = (input) => {
     if (typeof input === 'string') {
@@ -51,7 +52,7 @@ class RFQController {
                 offset: req.query.offset ? Math.max(parseInt(req.query.offset), 0) : 0,
                 category_id: req.query.category_id && !isNaN(req.query.category_id) ? parseInt(req.query.category_id) : undefined
             };
-            const rfqs = await RFQService.find(validatedQuery);
+            const rfqs = await rfqService.find(validatedQuery);
             res.status(200).json({ success: true, message: "RFQs fetched successfully", data: rfqs });
         } catch (error) {
             handleErrors(error, res);
@@ -69,7 +70,7 @@ class RFQController {
             if (!id || isNaN(id)) {
                 return res.status(400).json({ success: false, message: "Invalid RFQ ID" });
             }
-            const rfq = await RFQService.findById(id);
+            const rfq = await rfqService.findById(id);
             if (!rfq) {
                 return res.status(404).json({ success: false, message: "RFQ not found" });
             }
@@ -102,7 +103,7 @@ class RFQController {
                 currency: req.body.currency ? String(req.body.currency).substring(0, 3) : 'USD'
             };
             
-            const newRFQ = await RFQService.create(rfqData);
+            const newRFQ = await rfqService.create(rfqData);
             res.status(201).json({ success: true, message: "RFQ created successfully", data: newRFQ });
         } catch (error) {
             handleErrors(error, res);
@@ -132,7 +133,7 @@ class RFQController {
                 currency: req.body.currency ? String(req.body.currency).substring(0, 3) : undefined
             };
             const userId = req.user.id;
-            const updatedRFQ = await RFQService.update(id, updateData, userId);
+            const updatedRFQ = await rfqService.update(id, updateData, userId);
             res.status(200).json({ success: true, message: "RFQ updated successfully", data: updatedRFQ });
         } catch (error) {
             handleErrors(error, res);
@@ -152,7 +153,7 @@ class RFQController {
                 return res.status(400).json({ success: false, message: "Invalid RFQ ID" });
             }
             const userId = req.user.id;
-            const closedRFQ = await RFQService.close(id, userId);
+            const closedRFQ = await rfqService.close(id, userId);
             res.status(200).json({ success: true, message: "RFQ closed successfully", data: closedRFQ });
         } catch (error) {
             handleErrors(error, res);
@@ -170,7 +171,7 @@ class RFQController {
             if (!id || isNaN(id)) {
                 return res.status(400).json({ success: false, message: "Invalid RFQ ID" });
             }
-            const relatedRFQs = await RFQService.findRelated(id);
+            const relatedRFQs = await rfqService.findRelated(id);
             res.status(200).json({ success: true, message: "Related RFQs fetched", data: relatedRFQs });
         } catch (error) {
             handleErrors(error, res);

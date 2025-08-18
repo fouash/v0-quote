@@ -48,6 +48,10 @@ app.get('/', (req, res) => {
     res.send('RFQ Bidding Platform API is running!');
 });
 
+app.get('/test', (req, res) => {
+    res.json({ success: true, message: 'API is working', timestamp: new Date() });
+});
+
 // --- Error Handling ---
 app.use((err, req, res, next) => {
   // Log with structured context
@@ -64,7 +68,7 @@ app.use((err, req, res, next) => {
     },
     user: req.user ? { id: req.user.id, role: req.user.role } : 'anonymous',
   });
-  res.status(500).json({ error: 'Something went wrong!' });
+  res.status(500).json({ success: false, message: 'An internal server error occurred.' });
 });
 
 // --- Server ---
