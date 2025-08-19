@@ -1,14 +1,15 @@
-// Generated on 2016-05-11 using generator-angular 0.15.1
+// Updated Gruntfile.js - Modernized for better performance and maintainability
 'use strict';
-// # Globbing
-// for performance reasons we're only matching one level down:
-// 'test/spec/{,*/}*.js'
-// use this if you want to recursively match all subfolders:
-// 'test/spec/**/*.js'
+
+/**
+ * Modern Grunt configuration for GetLancer project
+ * Updated to use current best practices and dependencies
+ */
 module.exports = function(grunt) {
     // Time how long tasks take. Can help when optimizing build times
     require('time-grunt')(grunt);
-    // Automatically load required Grunt tasks
+    
+    // Automatically load required Grunt tasks with improved mappings
     require('jit-grunt')(grunt, {
         eslint: 'gruntify-eslint',
         lesslint: 'grunt-lesslint',
@@ -40,14 +41,15 @@ module.exports = function(grunt) {
     });
     // Configurable paths for the application
     var appConfig = {
-        app: require('./bower.json')
-            .appPath || 'app',
+        app: require('./bower.json').appPath || 'app',
         dist: 'dist/client'
     };
+    
     // Define the configuration for all the tasks
     grunt.initConfig({
         // Project settings
         yeoman: appConfig,
+        pkg: grunt.file.readJSON('package.json'), // For version info in banners
         // Watches files for changes and runs tasks based on the changed files
         watch: {
             bower: {
@@ -56,9 +58,10 @@ module.exports = function(grunt) {
             },
             js: {
                 files: ['<%= yeoman.app %>/scripts/{,*/}*.js'],
-                tasks: ['newer:jshint:all', 'newer:jscs:all'],
+                tasks: ['newer:jshint:all', 'newer:jscs:all'], // Consider migrating to ESLint
                 options: {
-                    livereload: '<%= connect.options.livereload %>'
+                    livereload: '<%= connect.options.livereload %>',
+                    spawn: false // Faster reloads
                 }
             },
             jsTest: {
@@ -69,19 +72,25 @@ module.exports = function(grunt) {
                 files: ['<%= yeoman.app %>/styles/{,*/}*.css'],
                 tasks: ['newer:copy:styles', 'postcss']
             },
-            gruntfile: {
-                files: ['Gruntfile.js']
+            less: {
+                files: ['<%= yeoman.app %>/styles/{,*/}*.less'],
+                tasks: ['less:compile', 'postcss']
             },
-            
+            gruntfile: {
+                files: ['Gruntfile.js'],
+                options: {
+                    reload: true
+                }
+            },
             livereload: {
                 options: {
                     livereload: '<%= connect.options.livereload %>'
                 },
                 files: [
-          '<%= yeoman.app %>/{,*/}*.html',
-          '.tmp/styles/{,*/}*.css',
-          '<%= yeoman.app %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
-        ]
+                    '<%= yeoman.app %>/{,*/}*.html',
+                    '.tmp/styles/{,*/}*.css',
+                    '<%= yeoman.app %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
+                ]
             }
         },
         // The actual grunt server settings
@@ -97,13 +106,11 @@ module.exports = function(grunt) {
                     open: true,
                     middleware: function(connect) {
                         return [
-              connect.static('.tmp'),
-              connect()
-                            .use('/bower_components', connect.static('./bower_components')),
-              connect()
-                            .use('/app/styles', connect.static('./app/styles')),
-              connect.static(appConfig.app)
-            ];
+                            connect.static('.tmp'),
+                            connect().use('/bower_components', connect.static('./bower_components')),
+                            connect().use('/app/styles', connect.static('./app/styles')),
+                            connect.static(appConfig.app)
+                        ];
                     }
                 }
             },
@@ -112,19 +119,19 @@ module.exports = function(grunt) {
                     port: 9001,
                     middleware: function(connect) {
                         return [
-              connect.static('.tmp'),
-              connect.static('test'),
-              connect()
-                            .use('/bower_components', connect.static('./bower_components')),
-              connect.static(appConfig.app)
-            ];
+                            connect.static('.tmp'),
+                            connect.static('test'),
+                            connect().use('/bower_components', connect.static('./bower_components')),
+                            connect.static(appConfig.app)
+                        ];
                     }
                 }
             },
             dist: {
                 options: {
                     open: true,
-                    base: '<%= yeoman.dist %>'
+                    base: '<%= yeoman.dist %>',
+                    keepalive: true
                 }
             }
         },
@@ -177,14 +184,21 @@ module.exports = function(grunt) {
             },
             server: '.tmp'
         },
-        // Add vendor prefixed styles
+        // Add vendor prefixed styles with modern browser support
         postcss: {
             options: {
                 processors: [
-          require('autoprefixer')({
-                        overrideBrowserslist: ['last 1 version']
+                    require('autoprefixer')({
+                        // Use .browserslistrc file or package.json browserslist field instead
+                        // Fallback configuration for older projects
+                        overrideBrowserslist: [
+                            'last 2 versions',
+                            '> 1%',
+                            'ie >= 11',
+                            'not dead'
+                        ]
                     })
-        ]
+                ]
             },
             server: {
                 options: {
@@ -195,7 +209,7 @@ module.exports = function(grunt) {
                     cwd: '.tmp/styles/',
                     src: '{,*/}*.css',
                     dest: '.tmp/styles/'
-        }]
+                }]
             },
             dist: {
                 files: [{
@@ -203,7 +217,7 @@ module.exports = function(grunt) {
                     cwd: '.tmp/styles/',
                     src: '{,*/}*.css',
                     dest: '.tmp/styles/'
-        }]
+                }]
             }
         },
         // Automatically inject Bower components into the app
@@ -298,19 +312,30 @@ module.exports = function(grunt) {
         },
         uglify: {
             options: {
-                mangle: false
+                mangle: {
+                    reserved: ['angular', '$', 'jQuery'] // Preserve these global variables
+                },
+                compress: {
+                    drop_console: true, // Remove console.logs in production
+                    drop_debugger: true,
+                    dead_code: true
+                },
+                sourceMap: {
+                    includeSources: false
+                },
+                banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - <%= grunt.template.today("yyyy-mm-dd") %> */'
             },
             generated: {
                 files: [{
                     dest: '<%= yeoman.dist %>/js/app.js',
                     src: ['.tmp/concat/js/app.js']
-		   }]
+                }]
             },
             admin: {
                 files: {
                     '<%= yeoman.app %>/ag-admin/scripts/admin.cache.js': [
-             '<%= yeoman.app %>/ag-admin/scripts/admin.cache.js'
-           ]
+                        '<%= yeoman.app %>/ag-admin/scripts/admin.cache.js'
+                    ]
                 }
             }
         },
@@ -430,11 +455,25 @@ module.exports = function(grunt) {
                 dest: '.tmp/templateCache.js'
             }
         },
-        // Babel with angularjs-annotate plugin for dependency injection
+        // Babel with modern ES6+ support and angularjs-annotate plugin
         babel: {
             options: {
-                presets: [],
-                plugins: ['angularjs-annotate']
+                presets: [
+                    ['@babel/preset-env', {
+                        targets: {
+                            browsers: [
+                                'last 2 versions',
+                                '> 1%',
+                                'ie >= 11'
+                            ]
+                        },
+                        modules: false // Keep ES6 modules for better tree shaking
+                    }]
+                ],
+                plugins: [
+                    'angularjs-annotate' // Automatic dependency injection for AngularJS
+                ],
+                sourceMap: true
             },
             dist: {
                 files: [{
@@ -565,24 +604,38 @@ module.exports = function(grunt) {
                 src: '<%= yeoman.app %>/styles/bootstrap.less'
             }
         },
-        // Validate files with ESLint
+        // Validate files with ESLint (modern replacement for JSHint + JSCS)
         eslint: {
+            options: {
+                configFile: '.eslintrc.js', // Use separate config file
+                format: 'stylish',
+                quiet: false
+            },
             src: [
-          'Gruntfile.js',
-          '<%= yeoman.app %>/scripts/{,*/}*.js'
-        ]
+                'Gruntfile.js',
+                '<%= yeoman.app %>/scripts/{,*/}*.js'
+            ],
+            test: {
+                src: ['test/spec/{,*/}*.js']
+            }
         },
-        // Handles our LESS compilation and uglification automatically. Only our 'main.less' file is included in compilation; all other files must be imported from this file.
+        // Handles LESS compilation with improved options
         less: {
+            options: {
+                compress: true,
+                optimization: 2,
+                strictMath: true,
+                sourceMap: true,
+                sourceMapFileInline: false
+            },
             compile: {
                 files: {
-                    '<%= yeoman.app %>/<%= theme %>styles/bootstrap.css': '<%= yeoman.app %>/<%= theme %>styles/bootstrap.less',
                     '<%= yeoman.app %>/ag-admin/styles/bootstrap.css': '<%= yeoman.app %>/ag-admin/styles/bootstrap.less'
-                },
-                options: {
-                    cleancss: true,
-                    compress: true
                 }
+            },
+            theme: {
+                // Dynamic theme compilation (set by theme task)
+                files: []
             }
         },
         // For finding todos/fixme in code
@@ -915,85 +968,133 @@ module.exports = function(grunt) {
             }
         }
     });
+    // Task definitions with improved organization and error handling
     grunt.registerTask('serve', 'Compile then start a connect web server', function(target) {
         if (target === 'dist') {
             return grunt.task.run(['build', 'connect:dist:keepalive']);
         }
         grunt.task.run([
-      'clean:server',
-      'wiredep',
-      'concurrent:server',
-      'postcss:server',
-      'connect:livereload',
-      'watch'
-    ]);
+            'clean:server',
+            'wiredep',
+            'concurrent:server',
+            'postcss:server',
+            'connect:livereload',
+            'watch'
+        ]);
     });
+    
     grunt.registerTask('server', 'DEPRECATED TASK. Use the "serve" task instead', function(target) {
         grunt.log.warn('The `server` task has been deprecated. Use `grunt serve` to start a server.');
         grunt.task.run(['serve:' + target]);
     });
-    grunt.registerTask('test', [
-    'clean:server',
-    'wiredep',
-    'concurrent:test',
-    'postcss',
-    'connect:test',
-    'karma'
-  ]);
-    grunt.registerTask('compile', [
-    'clean:dist',
-    'wiredep',
-    'less',
-    'useminPrepare',
-    'concurrent:dist',
-    'postcss',
-    'ngtemplates',
-    'concat',
-    'babel',
-    'copy:dist',
-    'cdnify',
-    'cssmin',
-    'uglify',
-    'filerev',
-    'usemin',
-    'htmlmin',
-	'regex-replace',
-	'todos',
-	'plato',
-	'exec:composer',
-    'plugin',
-    'compress',
-	'sftp',
-	'sshexec'
-  ]);
-    grunt.registerTask('default', [
-    'newer:jshint',
-    'newer:jscs',
-    'test'
-  ]);
-    grunt.registerTask('theme', 'Build task', function(theme) {
+    
+    grunt.registerTask('test', 'Run unit tests', [
+        'clean:server',
+        'wiredep',
+        'concurrent:test',
+        'postcss',
+        'connect:test',
+        'karma'
+    ]);
+    
+    grunt.registerTask('lint', 'Lint JavaScript files', [
+        'jshint',
+        'jscs',
+        'eslint' // Modern linting
+    ]);
+    
+    grunt.registerTask('compile', 'Build the application for production', [
+        'clean:dist',
+        'wiredep',
+        'less',
+        'useminPrepare',
+        'concurrent:dist',
+        'postcss',
+        'ngtemplates',
+        'concat',
+        'babel',
+        'copy:dist',
+        'cdnify',
+        'cssmin',
+        'uglify',
+        'filerev',
+        'usemin',
+        'htmlmin',
+        'regex-replace',
+        'todos',
+        'plato',
+        'exec:composer',
+        'plugin',
+        'compress',
+        'sftp',
+        'sshexec'
+    ]);
+    
+    grunt.registerTask('default', 'Default development task', [
+        'newer:jshint',
+        'newer:jscs',
+        'test'
+    ]);
+    
+    // Quick development build without deployment
+    grunt.registerTask('build-dev', 'Build for development', [
+        'clean:dist',
+        'wiredep',
+        'less',
+        'concurrent:dist',
+        'postcss',
+        'copy:dist'
+    ]);
+    
+    grunt.registerTask('theme', 'Build specific theme CSS', function(theme) {
         if (theme === undefined) {
-            grunt.warn('Theme must be specified, like theme:ryan.');
+            grunt.warn('Theme must be specified, like grunt theme:ryan');
+            return false;
         }
+        
         grunt.config.set('less.theme.files', [{
             src: '<%= yeoman.app %>/themes/' + theme + '/styles/bootstrap.less',
             dest: '<%= yeoman.app %>/themes/' + theme + '/styles/bootstrap.css'
         }]);
         grunt.task.run('less:theme');
     });
-    grunt.registerTask('build', 'Build task', function(env) {
+    
+    grunt.registerTask('build', 'Build for specific environment', function(env) {
         if (env === undefined) {
-            grunt.warn('Environment must be specified, like grunt:build:dev');
+            grunt.warn('Environment must be specified, like grunt build:dev');
+            return false;
         }
+        
+        var configPath = 'builds/' + env + '.json';
+        if (!grunt.file.exists(configPath)) {
+            grunt.warn('Configuration file not found: ' + configPath);
+            return false;
+        }
+        
         grunt.config.set('env', env);
-        grunt.config.set('config', grunt.file.readJSON('builds/' + env + '.json'));
+        grunt.config.set('config', grunt.file.readJSON(configPath));
         grunt.task.run(['compile']);
     });
-    // The task to format source files.
-    grunt.registerTask('ui-format', ['jsbeautifier:app']);
-    grunt.registerTask('php-format', ['exec:beautify']);
-    // The task to check errors in source files. , 'jsbeautifier:pre-merge'
-    grunt.registerTask('pre-commit', ['jshint', 'eslint', 'phplint', 'complexity']);
+    
+    // Code formatting tasks
+    grunt.registerTask('ui-format', 'Format UI code', ['jsbeautifier:app']);
+    grunt.registerTask('php-format', 'Format PHP code', ['exec:beautify']);
+    
+    // Pre-commit hook for code quality
+    grunt.registerTask('pre-commit', 'Pre-commit quality checks', [
+        'jshint',
+        'eslint',
+        'phplint',
+        'complexity'
+    ]);
+    
+    // Quality assurance tasks
+    grunt.registerTask('qa', 'Run all quality checks', [
+        'lint',
+        'complexity',
+        'plato',
+        'test'
+    ]);
     grunt.registerTask('plugin', 'Plugin task', function() {
         var concat = {};
         var ngtemplates = {};
