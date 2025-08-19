@@ -329,7 +329,15 @@ module.exports = function(grunt) {
         },
         concat: {
             'admin-css': {
-                src: ['<%= yeoman.app %>/ag-admin/styles/ng-admin.min.css', 'bower_components/angular-google-places-autocomplete/src/autocomplete.css','bower_components/ng-tags-input/ng-tags-input.min.css', '<%= yeoman.app %>/ag-admin/styles/auth.css','<%= yeoman.app %>/ag-admin/styles/vendor.css', '<%= yeoman.app %>/ag-admin/styles/app.css', '<%= yeoman.app %>/ag-admin/styles/custom.css'],
+                src: [
+                    '<%= yeoman.app %>/ag-admin/styles/ng-admin.min.css',
+                    'bower_components/angular-google-places-autocomplete/src/autocomplete.css',
+                    'bower_components/ng-tags-input/ng-tags-input.min.css',
+                    '<%= yeoman.app %>/ag-admin/styles/auth.css',
+                    '<%= yeoman.app %>/ag-admin/styles/vendor.css',
+                    '<%= yeoman.app %>/ag-admin/styles/app.css',
+                    '<%= yeoman.app %>/ag-admin/styles/custom.css'
+                ],
                 dest: '<%= yeoman.app %>/ag-admin/styles/admin.cache.css'
             },
             'themes-css': {
@@ -337,11 +345,52 @@ module.exports = function(grunt) {
                 dest: '<%= yeoman.app %>/themes/ryan/styles/ryan.cache.css'
             },
             'admin-js': {
-                src: ['bower_components/angular-http-auth/src/http-auth-interceptor.js','bower_components/angular-deferred-bootstrap/angular-deferred-bootstrap.min.js', 'bower_components/angular-resource/angular-resource.js', 'bower_components/angular-md5/angular-md5.js', 'bower_components/angular-bootstrap/ui-bootstrap-tpls.js', 'bower_components/angular-filter/dist/angular-filter.min.js', 'bower_components/angular-cookies/angular-cookies.js', 'bower_components/angular-ui-sortable/sortable.js','bower_components/ng-tags-input/ng-tags-input.js', '<%= yeoman.app %>/ag-admin/libs/jquery.ui.sortable.js', '<%= yeoman.app %>/ag-admin/scripts/ng-admin.app.js', '<%= yeoman.app %>/ag-admin/scripts/services/payment_gateways.js', '<%= yeoman.app %>/ag-admin/scripts/services/get_gateways.js', '<%= yeoman.app %>/ag-admin/scripts/services/post_gateways.js', '<%= yeoman.app %>/ag-admin/scripts/services/zazpay_synchronize.js', '<%= yeoman.app %>/ag-admin/scripts/services/admin_token_service.js', '<%= yeoman.app %>/ag-admin/scripts/services/oauth_token_injector.js', '<%= yeoman.app %>/ag-admin/scripts/services/interceptor.js', '<%= yeoman.app %>/ag-admin/scripts/services/refresh_token.js', '<%= yeoman.app %>/ag-admin/scripts/services/servicelocation.js','<%= yeoman.app %>/ag-admin/scripts/services/translation.js','<%= yeoman.app %>/ag-admin/scripts/services/change_password.js','<%= yeoman.app %>/ag-admin/scripts/services/project_dispute.js','<%= yeoman.app %>/ag-admin/scripts/controllers/users_login.js', '<%= yeoman.app %>/ag-admin/scripts/controllers/users_logout.js', '<%= yeoman.app %>/ag-admin/scripts/controllers/payment_gateway.js','<%= yeoman.app %>/ag-admin/scripts/controllers/plugins.js','<%= yeoman.app %>/ag-admin/scripts/controllers/transaction.js','<%= yeoman.app %>/ag-admin/scripts/controllers/servicelocation.js', '<%= yeoman.app %>/ag-admin/scripts/controllers/translation.js','<%= yeoman.app %>/ag-admin/scripts/controllers/menu.js','<%= yeoman.app %>/ag-admin/scripts/controllers/change_password.js','<%= yeoman.app %>/ag-admin/scripts/controllers/project_disputes.js'],
+                src: [
+                    // Angular dependencies
+                    'bower_components/angular-http-auth/src/http-auth-interceptor.js',
+                    'bower_components/angular-deferred-bootstrap/angular-deferred-bootstrap.min.js',
+                    'bower_components/angular-resource/angular-resource.js',
+                    'bower_components/angular-md5/angular-md5.js',
+                    'bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
+                    'bower_components/angular-filter/dist/angular-filter.min.js',
+                    'bower_components/angular-cookies/angular-cookies.js',
+                    'bower_components/angular-ui-sortable/sortable.js',
+                    'bower_components/ng-tags-input/ng-tags-input.js',
+                    // Admin libs
+                    '<%= yeoman.app %>/ag-admin/libs/jquery.ui.sortable.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/ng-admin.app.js',
+                    // Services
+                    '<%= yeoman.app %>/ag-admin/scripts/services/payment_gateways.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/services/get_gateways.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/services/post_gateways.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/services/zazpay_synchronize.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/services/admin_token_service.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/services/oauth_token_injector.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/services/interceptor.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/services/refresh_token.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/services/servicelocation.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/services/translation.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/services/change_password.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/services/project_dispute.js',
+                    // Controllers
+                    '<%= yeoman.app %>/ag-admin/scripts/controllers/users_login.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/controllers/users_logout.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/controllers/payment_gateway.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/controllers/plugins.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/controllers/transaction.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/controllers/servicelocation.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/controllers/translation.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/controllers/menu.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/controllers/change_password.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/controllers/project_disputes.js'
+                ],
                 dest: '<%= yeoman.app %>/ag-admin/scripts/admin.cache.js'
             },
             'admin-vendor-js': {
-                src: ['bower_components/jquery/dist/jquery.min.js', '<%= yeoman.app %>/ag-admin/scripts/ng-admin.min.js'],
+                src: [
+                    'bower_components/jquery/dist/jquery.min.js',
+                    '<%= yeoman.app %>/ag-admin/scripts/ng-admin.min.js'
+                ],
                 dest: '<%= yeoman.app %>/ag-admin/scripts/vendor.cache.js'
             }
         },
