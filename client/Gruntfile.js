@@ -10,7 +10,6 @@ module.exports = function(grunt) {
     require('time-grunt')(grunt);
     // Automatically load required Grunt tasks
     require('jit-grunt')(grunt, {
-        'closure-compiler': 'grunt-closure-compiler',
         eslint: 'gruntify-eslint',
         lesslint: 'grunt-lesslint',
         todos: 'grunt-todos',
@@ -146,18 +145,6 @@ module.exports = function(grunt) {
                     jshintrc: 'test/.jshintrc'
                 },
                 src: ['test/spec/{,*/}*.js']
-            }
-        },
-        'closure-compiler': {
-            frontend: {
-                closurePath: '/root/closure',
-                js: '<%= yeoman.app %>/scripts/{,*/}*.js',
-                jsOutputFile: '<%= yeoman.dist %>/reports/closure.js',
-                maxBuffer: 500,
-                options: {
-                    compilation_level: 'ADVANCED_OPTIMIZATIONS',
-                    language_in: 'ECMASCRIPT5_STRICT'
-                }
             }
         },
         // Make sure code styles are up to par
@@ -973,11 +960,8 @@ module.exports = function(grunt) {
 	'regex-replace',
 	'todos',
 	'plato',
-//	'exec:gitbook',
 	'exec:composer',
     'plugin',
-    //'copy:build',
-	//'sftp-deploy'
     'compress',
 	'sftp',
 	'sshexec'
